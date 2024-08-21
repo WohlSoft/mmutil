@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2...3.5)
 
-project(mmutil VERSION 1.10.1 LANGUAGES C)
+project(mmutil VERSION 1.10.2 LANGUAGES C)
 
 set(MMUTIL_SRC
 	source/adpcm.c

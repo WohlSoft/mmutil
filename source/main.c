@@ -54,9 +54,9 @@ int PANNING_SEP;
 int number_of_inputs;
 
 #define USAGE "\n\
-************************\n\
+*************************\n\
 * Maxmod Utility "PACKAGE_VERSION" *\n\
-************************\n\
+*************************\n\
 \n\
 Usage:\n\
   mmutil [options] input files ...\n\
@@ -93,7 +93,7 @@ Usage:\n\
 |                                                                 |\n\
 | mmutil -d -b input1.xm input2.s3m testsound.wav                 |\n\
 `-----------------------------------------------------------------'\n\
- www.maxmod.org\n\
+ https://github.com/ds-sloth/mmutil\n\
 "
 
 void print_usage( void )

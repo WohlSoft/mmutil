@@ -68,13 +68,15 @@ Usage:\n\
 |------------|----------------------------------------------------|\n\
 | -o<output> | Set output file.                                   |\n\
 | -h<header> | Set header output file.                            |\n\
+| -c<header> | (Adv) set ini output file.                         |\n\
 | -m         | Output MAS file rather than soundbank.             |\n\
 | -d         | Use for NDS projects.                              |\n\
 | -b         | Create test ROM. (use -d for .nds, otherwise .gba) |\n\
 | -i         | Ignore sample flags.                               |\n\
 | -v         | Enable verbose output.                             |\n\
 | -p         | Set initial panning separation for MOD/S3M.        |\n\
-| -st1234    | (Adv) start soundbank sample index from 1234.      |\n\
+| -sts1234   | (Adv) start soundbank and ini sample ID at 1234.   |\n\
+| -stm1234   | (Adv) start ini module ID at 1234.                 |\n\
 `-----------------------------------------------------------------'\n\
 \n\
 .-----------------------------------------------------------------.\n\
@@ -144,6 +146,7 @@ int main(int argc, char* argv[])
 	char* str_input=NULL;
 	char* str_output=NULL;
 	char* str_header=NULL;
+	char* str_ini=NULL;
 	
 	MAS_Module mod;
 
@@ -168,6 +171,7 @@ int main(int argc, char* argv[])
 
 	PANNING_SEP = 128;
 	int start_sample = 0;
+	int start_mod = 0;
 
 	//------------------------------------------------------------------------
 	// parse arguments
@@ -191,12 +195,16 @@ int main(int argc, char* argv[])
 				str_output = argv[a]+2;
 			else if( argv[a][1] == 'h' )
 				str_header = argv[a]+2;
+			else if( argv[a][1] == 'c' )
+				str_ini = argv[a]+2;
 			else if( argv[a][1] == 'm' )
 				m_flag = true;
 			else if( argv[a][1] == 'z' )
 				z_flag = true;
-			else if( argv[a][1] == 's' && argv[a][2] == 't' )
-				start_sample = atoi( &argv[a][3] );
+			else if( argv[a][1] == 's' && argv[a][2] == 't' && argv[a][3] == 's' )
+				start_sample = atoi( &argv[a][4] );
+			else if( argv[a][1] == 's' && argv[a][2] == 't' && argv[a][3] == 'm' )
+				start_mod = atoi( &argv[a][4] );
 		}
 		else if( !str_input )
 		{
@@ -390,7 +398,6 @@ int main(int argc, char* argv[])
 				printf( "Operation Canceled!\n" );
 				return -1;
 			}
-			
 		}
 
 		if( file_open_write( str_output ) )
@@ -422,7 +429,7 @@ int main(int argc, char* argv[])
 	{
 		int i;
 
-		MSL_Create( argv, argc, "tempSH308GK.bin", 0, v_flag, 0 );
+		MSL_Create( argv, argc, "tempSH308GK.bin", NULL, NULL, v_flag, 0, 0 );
 
 		if( file_exists( str_output ) )
 		{
@@ -490,7 +497,20 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		MSL_Create( argv, argc, str_output, str_header, v_flag, start_sample );
+		if( !str_output )
+			str_output = "soundbank.bin";
+
+		if( file_exists( str_output ) )
+		{
+			printf( "Output file exists! Overwrite? (y/n) " );
+			if( !GetYesNo() )
+			{
+				printf( "Operation Canceled!\n" );
+				return -1;
+			}
+		}
+
+		MSL_Create( argv, argc, str_output, str_header, str_ini, v_flag, start_sample, start_mod );
 	}
 	return 0;
 }

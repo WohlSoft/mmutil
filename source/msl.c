@@ -46,6 +46,9 @@ FILE*	F_SAMP=NULL;
 FILE*	F_SONG=NULL;
 
 FILE*	F_HEADER=NULL;
+FILE*	F_INI=NULL;
+
+char    INI_STATE='\0';
 
 u16		MSL_SAMPS_START;
 u16		MSL_SONGS_START;
@@ -62,10 +65,10 @@ void MSL_PrintDefinition( char* filename, u16 id, char* prefix );
 
 #define SAMPLE_HEADER_SIZE (12 + (( target_system == SYSTEM_NDS ) ? 4:0))
 
-void MSL_Erase( u16 start_sample )
+void MSL_Erase( u16 start_sample, u16 start_mod )
 {
 	MSL_SAMPS_START = start_sample;
-	MSL_SONGS_START = 0;
+	MSL_SONGS_START = start_mod;
 	MSL_NSAMPS = MSL_SAMPS_START;
 	MSL_NSONGS = MSL_SONGS_START;
 	file_delete( TMP_SAMP );
@@ -271,6 +274,25 @@ void MSL_PrintDefinition( char* filename, u16 id, char* prefix )
 	int x,s=0;
 	if( filename[0] == 0 )	// empty string
 		return;
+
+	if( F_INI )
+	{
+		if( INI_STATE != prefix[0] )
+		{
+			if( INI_STATE != 0 )
+				fprintf( F_INI, "\n" );
+
+			if( prefix[0] == 'M' )
+				fprintf( F_INI, "[modules]\n" );
+			else
+				fprintf( F_INI, "[samples]\n" );
+
+			INI_STATE = prefix[0];
+		}
+
+		fprintf( F_INI, "%s = %d\n", filename, (int)id );
+	}
+
 	for( x = 0; x < (int)strlen( filename ); x++ )
 	{
 		if( filename[x] == '\\' || filename[x] == '/' ) s = x+1; 
@@ -348,7 +370,7 @@ void MSL_LoadFile( char* filename, bool verbose )
 	
 }
 
-int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose, int start_sample )
+int MSL_Create( char* argv[], int argc, char* output, char* header, char* ini, bool verbose, int start_sample, int start_mod )
 {
 //	int str_w=0;
 //	u8 pmode=0;
@@ -360,14 +382,28 @@ int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose
 		start_sample = 0;
 	}
 
+	if( start_mod < 0 )
+	{
+		printf( "Ignoring invalid start sample %d\n", start_mod );
+		start_mod = 0;
+	}
+
 	int x;
 
-	MSL_Erase( start_sample );
+	MSL_Erase( start_sample, start_mod );
 	str_msl[0] = 0;
+
 	F_HEADER=NULL;
 	if( header )
 	{
 		F_HEADER = fopen( header, "wb" );
+	}
+
+	F_INI=NULL;
+	if( ini )
+	{
+		F_INI = fopen( ini, "wb" );
+		INI_STATE = '\0';
 	}
 
 //	if( !F_HEADER )
@@ -394,11 +430,28 @@ int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose
 
 	if( F_HEADER )
 	{
+		if( MSL_SAMPS_START )
+		{
+			printf( "Warning: header written, but this soundbank is designed for use as an extension bank." );
+		}
+
 		fprintf( F_HEADER, "#define MSL_NSONGS	%i\r\n", MSL_NSONGS );
 		fprintf( F_HEADER, "#define MSL_NSAMPS	%i\r\n", MSL_NSAMPS );
 		fprintf( F_HEADER, "#define MSL_BANKSIZE	%i\r\n", (MSL_NSAMPS+MSL_NSONGS) );
 		fclose( F_HEADER );
 		F_HEADER=NULL;
+	}
+
+	if( F_INI )
+	{
+		fprintf( F_INI, "\n" );
+		fprintf( F_INI, "[header]\n" );
+		fprintf( F_INI, "sample-start = %d\n", (int)MSL_SAMPS_START);
+		fprintf( F_INI, "sample-count = %d\n", (int)(MSL_NSAMPS - MSL_SAMPS_START));
+		fprintf( F_INI, "module-start = %d\n", (int)MSL_SONGS_START);
+		fprintf( F_INI, "module-count = %d\n", (int)(MSL_NSONGS - MSL_SONGS_START));
+		fclose( F_INI );
+		F_INI=NULL;
 	}
 
 	file_delete( TMP_SAMP );

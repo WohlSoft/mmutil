@@ -269,8 +269,10 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	for( x = 0; x < 28; x++ )
 		mod->title[x] = read8();	// read song name
 
-	if( read8() != 0x1A );
+	if( read8() != 0x1A )
+	{
 //		return ERR_INVALID_MODULE;
+	}
 	if( read8() != 16 )
 		return ERR_INVALID_MODULE;
 	if( verbose )
@@ -296,7 +298,9 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	mod->old_mode=true;
 	
 	s3m_flags = read16();
+	(void)s3m_flags; // unused for now
 	cwt = read16();
+	(void)cwt; // unused for now
 	ffi = read16();
 	if( read32() != 'MRCS' ) // "SCRM" mark
 		return ERR_INVALID_MODULE;
@@ -323,6 +327,7 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 			mod->channel_panning[x] = 128;
 		}
 	}
+	(void)chan_enabled; // unused for now
 	for( x = 0; x < mod->order_count; x++ )
 	{
 		mod->orders[x] = read8();

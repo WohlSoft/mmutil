@@ -75,10 +75,9 @@ const unsigned short crc16tab[] =
 
 void Write_NDS( void )
 {
-	int x;
 	const char game_title[] = "SOUND TEST ";
 
-	for( x = 0; x < 12; x++ )
+	for( unsigned int x = 0; x < 12; x++ )
 		write8( game_title[x] );
 
 	write32( '####' );	// gamecode
@@ -86,7 +85,7 @@ void Write_NDS( void )
 	write8( 0 );	// unit code (Nintendo DS)
 	write8( 0 );	// encryption seed
 	write8( 0 );	// device capability
-	for( x=  0; x < 9; x++ )
+	for( unsigned int x = 0; x < 9; x++ )
 		write8( 0 );	// reserved
 	write8( 0 );	// rom version
 	write8( 4 );	// autostart
@@ -145,7 +144,7 @@ void Write_NDS( void )
 	write32( 0 );
 	write32( 0 );
 
-	for( x = 0; x < 0x9c; x++ )
+	for( unsigned int x = 0; x < 0x9c; x++ )
 		write8( nds_logo[x] );		// NINTENDO LOGO
 
 	write16( 0x9e1a );		// nintendo logo checksum
@@ -156,17 +155,17 @@ void Write_NDS( void )
 
 	write32( 0 );			// reserved
 
-	for( x = 0; x < 0x90; x++ )
+	for( unsigned int x = 0; x < 0x90; x++ )
 		write8( 0 );
 
 	// write binaries
-	for( x = 0; x < ARM7_SIZE; x++ )
+	for( unsigned int x = 0; x < ARM7_SIZE; x++ )
 		write8( arm7_bin[x] );
-	for( x = 0; x < 32768-ARM7_SIZE; x++ )	// pad to 32k
+	for( unsigned int x = 0; x < 32768-ARM7_SIZE; x++ )	// pad to 32k
 		write8( (u8)x );
-	for( x = 0; x < ARM9_SIZE; x++ )
+	for( unsigned int x = 0; x < ARM9_SIZE; x++ )
 		write8( arm9_bin[x] );
-	for( x = 0; x < 65536-ARM9_SIZE; x++ )	// pad to 64k
+	for( unsigned int x = 0; x < 65536-ARM9_SIZE; x++ )	// pad to 64k
 		write8( (u8)x );
 }
 

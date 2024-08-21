@@ -186,7 +186,6 @@ void Resample( Sample* samp, u32 newsize )
 	
 	int oldlength = samp->sample_length;
 	int lpoint = samp->loop_start;
-	int i;
 	
 	bool bit16 = samp->format & SAMPF_16BIT;
 	double sign_diff;
@@ -206,7 +205,7 @@ void Resample( Sample* samp, u32 newsize )
 	double tscale = (double)oldlength / (double)newsize;
 	double posf;
 	
-	for( i = 0; i < newsize; i++ )
+	for( unsigned int i = 0; i < newsize; i++ )
 	{
 		posf = (double)i * tscale;
 		int posi = (int)floor(posf);
@@ -521,8 +520,8 @@ void FixSample_NDS( Sample* samp )
 void FixSample( Sample* samp )
 {
 	// Clamp loop_start and loop_end (f.e. FR_TOWER.MOD)
-	samp->loop_start = CLAMP(samp->loop_start, 0, samp->sample_length);
-	samp->loop_end = CLAMP(samp->loop_end, 0, samp->sample_length);
+	samp->loop_start = MIN(samp->loop_start, samp->sample_length);
+	samp->loop_end = MIN(samp->loop_end, samp->sample_length);
 
 	if( target_system == SYSTEM_GBA )
 		FixSample_GBA( samp );

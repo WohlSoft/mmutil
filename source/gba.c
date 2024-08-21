@@ -398,7 +398,7 @@ const u8 GBA_ROM[] = {
 
 void Write_GBA( void )
 {
-	int x;
+	unsigned int x;
 
 	for( x = 0; x < sizeof( GBA_ROM ); x++ )
 		write8( GBA_ROM[x] );

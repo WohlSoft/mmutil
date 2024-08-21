@@ -95,14 +95,14 @@ int file_seek_write( int offset, int mode )
 	return fseek( fout, offset, mode );
 }
 
-int file_tell_read( void )
+unsigned int file_tell_read( void )
 {
-	return ftell( fin );
+	return (unsigned int)ftell( fin );
 }
 
-int file_tell_write( void )
+unsigned int file_tell_write( void )
 {
-	return ftell( fout );
+	return (unsigned int)ftell( fout );
 }
 
 int file_tell_size( void )

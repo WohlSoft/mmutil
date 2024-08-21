@@ -44,8 +44,8 @@ void align32( void );
 void skip8( u32 count );
 int file_seek_read( int offset, int mode );
 int file_seek_write( int offset, int mode );
-int file_tell_read( void );
-int file_tell_write( void );
+unsigned int file_tell_read( void );
+unsigned int file_tell_write( void );
 
 u8 read8f( FILE* p_fin );
 u16 read16f( FILE* p_fin );

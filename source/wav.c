@@ -118,8 +118,6 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 		case 'atad':	// data chunk
 		//---------------------------------------------------------------------
 		{
-			int t, c, dat;
-			
 			if( !hasformat )
 			{
 				return LOADWAV_CORRUPT;
@@ -130,7 +128,7 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 			
 			// clip chunk size against end of file (for some borked wavs...)
 			{
-				int br = file_size - file_tell_read();
+				unsigned int br = file_size - file_tell_read();
 				chunk_size = chunk_size > br ? br : chunk_size;
 			}
 			
@@ -138,12 +136,12 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 			samp->data = malloc( chunk_size );
 			
 			// read sample data
-			for( t = 0; t < samp->sample_length; t++ )
+			for( unsigned int t = 0; t < samp->sample_length; t++ )
 			{
-				dat = 0;
+				int dat = 0;
 				
 				// for multi-channel samples, get average value
-				for( c = 0; c < num_channels; c++ )
+				for( unsigned int c = 0; c < num_channels; c++ )
 				{
 					dat += bit_depth == 8 ? ((int)read8()) - 128 : ((short)read16());
 				}

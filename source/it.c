@@ -490,6 +490,7 @@ int Load_IT( MAS_Module* itm, bool verbose )
 	itm->samp_count		= (u8)read16();
 	itm->patt_count		= (u8)read16();
 	cwt = read16();
+	(void)cwt; // uncertain why unused
 	cmwt = read16(); // upward compatible
 	//skip8( 4 );	// created with tracker / upward compatible
 	w = read16(); // flags
@@ -807,7 +808,7 @@ int Load_IT_Sample_CMP( u8 *p_dest_buffer, int samp_len, u16 cmwt, bool bit16 )
 					border = (0xFFFF >> ((nbits+1) - bit_width)) - (nbits/2);
 								// lower border for width chg 
 
-					if ( (int)aux_value > (int)border && (int)aux_value <= ((int)border + nbits) ) {
+					if ( (int)aux_value > (int)border && (int)aux_value <= (int)((int)border + nbits) ) {
 
 						aux_value -= border; // convert width to 1-8 
 						bit_width = (aux_value < bit_width) ? aux_value : aux_value + 1;

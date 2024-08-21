@@ -70,7 +70,7 @@ void MSL_Erase( void )
 u16 MSL_AddSample( Sample* samp )
 {
 	u32 sample_length;
-	u32 x;
+	// u32 x; // UNUSED
 	file_open_write_end( TMP_SAMP );
 
 	sample_length = samp->sample_length;

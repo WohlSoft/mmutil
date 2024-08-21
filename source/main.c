@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
 	int strp;
 	int strpi;
 
-	bool g_flag=false;
+	bool b_flag=false;
 	bool v_flag=false;
 	bool m_flag=false;
 	bool z_flag=false;
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
 		if( argv[a][0] == '-' )
 		{
 			if( argv[a][1] == 'b' )
-				g_flag = true;
+				b_flag = true;
 			else if( argv[a][1] == 'v' )
 				v_flag = true;
 			else if( argv[a][1] == 'd' )
@@ -236,9 +236,9 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if( m_flag & g_flag )
+	if( m_flag & b_flag )
 	{
-		printf("-m and -g cannot be combined.\n");
+		printf("-m and -b cannot be combined.\n");
 		return -1;
 	}
 	
@@ -249,10 +249,10 @@ int main(int argc, char* argv[])
 	}
 
 	//---------------------------------------------------------------------------
-	// m/g generate output target if not given
+	// m/b generate output target if not given
 	//---------------------------------------------------------------------------
 
-	if( m_flag || g_flag)
+	if( m_flag || b_flag)
 	{
 		if( !str_output )
 		{
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
 				}
 				
 				str_output[strpi++] = '.';
-				if( !g_flag )
+				if( !b_flag )
 				{
 					str_output[strpi++] = 'm';
 					str_output[strpi++] = 'a';
@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
 #endif
 		}
 	}
-	else if( g_flag )
+	else if( b_flag )
 	{
 		int i;
 
@@ -468,14 +468,14 @@ int main(int argc, char* argv[])
 		
 		file_delete( "tempSH308GK.bin" );
 
-		if( g_flag && target_system == SYSTEM_NDS )
+		if( b_flag && target_system == SYSTEM_NDS )
 			Validate_NDS( str_output, output_size );
 		
 		if( v_flag )
 		{
 			printf( "Success! :D\n" );
 
-			if( g_flag && target_system == SYSTEM_GBA )
+			if( b_flag && target_system == SYSTEM_GBA )
 			{
 				if( output_size < 262144 )
 				{

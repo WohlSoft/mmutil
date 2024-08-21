@@ -74,6 +74,7 @@ Usage:\n\
 | -i         | Ignore sample flags.                               |\n\
 | -v         | Enable verbose output.                             |\n\
 | -p         | Set initial panning separation for MOD/S3M.        |\n\
+| -st1234    | (Adv) start soundbank sample index from 1234.      |\n\
 `-----------------------------------------------------------------'\n\
 \n\
 .-----------------------------------------------------------------.\n\
@@ -166,6 +167,7 @@ int main(int argc, char* argv[])
 	number_of_inputs=0;
 
 	PANNING_SEP = 128;
+	int start_sample = 0;
 
 	//------------------------------------------------------------------------
 	// parse arguments
@@ -193,6 +195,8 @@ int main(int argc, char* argv[])
 				m_flag = true;
 			else if( argv[a][1] == 'z' )
 				z_flag = true;
+			else if( argv[a][1] == 's' && argv[a][2] == 't' )
+				start_sample = atoi( &argv[a][3] );
 		}
 		else if( !str_input )
 		{
@@ -418,7 +422,7 @@ int main(int argc, char* argv[])
 	{
 		int i;
 
-		MSL_Create( argv, argc, "tempSH308GK.bin", 0, v_flag );
+		MSL_Create( argv, argc, "tempSH308GK.bin", 0, v_flag, 0 );
 
 		if( file_exists( str_output ) )
 		{
@@ -486,7 +490,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		MSL_Create( argv, argc, str_output, str_header, v_flag );
+		MSL_Create( argv, argc, str_output, str_header, v_flag, start_sample );
 	}
 	return 0;
 }

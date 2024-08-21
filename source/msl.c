@@ -47,6 +47,9 @@ FILE*	F_SONG=NULL;
 
 FILE*	F_HEADER=NULL;
 
+u16		MSL_SAMPS_START;
+u16		MSL_SONGS_START;
+
 u16		MSL_NSAMPS;
 u16		MSL_NSONGS;
 
@@ -59,10 +62,12 @@ void MSL_PrintDefinition( char* filename, u16 id, char* prefix );
 
 #define SAMPLE_HEADER_SIZE (12 + (( target_system == SYSTEM_NDS ) ? 4:0))
 
-void MSL_Erase( void )
+void MSL_Erase( u16 start_sample )
 {
-	MSL_NSAMPS = 0;
-	MSL_NSONGS = 0;
+	MSL_SAMPS_START = start_sample;
+	MSL_SONGS_START = 0;
+	MSL_NSAMPS = MSL_SAMPS_START;
+	MSL_NSONGS = MSL_SONGS_START;
 	file_delete( TMP_SAMP );
 	file_delete( TMP_SONG );
 }
@@ -217,13 +222,13 @@ void MSL_Export( char* filename )
 	parap_song = (u32*)malloc( MSL_NSONGS * sizeof( u32 ) );
 	
 	// reserve space for parapointers
-	for( x = 0; x < MSL_NSAMPS; x++ )
+	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
 		write32( 0xAAAAAAAA );
-	for( x = 0; x < MSL_NSONGS; x++ )
+	for( x = MSL_SONGS_START; x < MSL_NSONGS; x++ )
 		write32( 0xAAAAAAAA );
 	// copy samples
 	file_open_read( TMP_SAMP );
-	for( x = 0; x < MSL_NSAMPS; x++ )
+	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
 	{
 		align32();
 		parap_samp[x] = file_tell_write();
@@ -235,7 +240,7 @@ void MSL_Export( char* filename )
 	file_close_read();
 	
 	file_open_read( TMP_SONG );
-	for( x = 0; x < MSL_NSONGS; x++ )
+	for( x = MSL_SONGS_START; x < MSL_NSONGS; x++ )
 	{
 		align32();
 		parap_song[x] = file_tell_write();
@@ -247,9 +252,9 @@ void MSL_Export( char* filename )
 	file_close_read();
 	
 	file_seek_write( 0x0C, SEEK_SET );
-	for( x = 0; x < MSL_NSAMPS; x++ )
+	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
 		write32( parap_samp[x] );
-	for( x=  0; x < MSL_NSONGS; x++ )
+	for( x=  MSL_SONGS_START; x < MSL_NSONGS; x++ )
 		write32( parap_song[x] );
 
 	file_close_write();
@@ -343,15 +348,21 @@ void MSL_LoadFile( char* filename, bool verbose )
 	
 }
 
-int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose )
+int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose, int start_sample )
 {
 //	int str_w=0;
 //	u8 pmode=0;
 //	bool comment=false;
 
+	if( start_sample < 0 )
+	{
+		printf( "Ignoring invalid start sample %d\n", start_sample );
+		start_sample = 0;
+	}
+
 	int x;
 
-	MSL_Erase();
+	MSL_Erase( start_sample );
 	str_msl[0] = 0;
 	F_HEADER=NULL;
 	if( header )

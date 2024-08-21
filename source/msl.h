@@ -23,6 +23,6 @@
 #ifndef MSL_H
 #define MSL_H
 
-int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose );
+int MSL_Create( char* argv[], int argc, char* output, char* header, bool verbose, int start_sample );
 
 #endif

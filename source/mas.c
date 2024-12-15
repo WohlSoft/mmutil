@@ -31,7 +31,7 @@
 #include "version.h"
 
 u32 MAS_OFFSET;
-u32 MAS_FILESIZE;
+u32 MM_MAS_FILESIZE;
 
 static int CalcEnvelopeSize( Instrument_Envelope* env )
 {
@@ -54,14 +54,14 @@ static int CalcInstrumentSize( Instrument* instr )
 void Write_Instrument_Envelope( Instrument_Envelope* env )
 {
 	int x;
-	write8( (u8)(env->node_count*4 + 8) ); // maximum is 6+75
-	write8( env->loop_start );
-	write8( env->loop_end );
-	write8( env->sus_start );
-	write8( env->sus_end );
-	write8( env->node_count );
-	write8( env->env_filter );
-	write8( BYTESMASHER );
+	mm_write8( (u8)(env->node_count*4 + 8) ); // maximum is 6+75
+	mm_write8( env->loop_start );
+	mm_write8( env->loop_end );
+	mm_write8( env->sus_start );
+	mm_write8( env->sus_end );
+	mm_write8( env->node_count );
+	mm_write8( env->env_filter );
+	mm_write8( BYTESMASHER );
 	if( env->node_count > 1 )
 	{
 		int delta;
@@ -87,8 +87,8 @@ void Write_Instrument_Envelope( Instrument_Envelope* env )
 				range = 0;
 				delta=0;
 			}
-			write16( (u16)delta );
-			write16( (u16)(base | (range<<7)) );
+			mm_write16( (u16)delta );
+			mm_write16( (u16)(base | (range<<7)) );
 		}
 	}
 }
@@ -98,25 +98,25 @@ void Write_Instrument( Instrument* inst )
 	int y;
 	int full_notemap;
 	int first_notemap_samp;
-	align32();
-	inst->parapointer = file_tell_write()-MAS_OFFSET;
-	/*write8( inst->global_volume );
-	write8( (u8)inst->fadeout );
-	write8( inst->random_volume );
-	write8( inst->nna );
-	write8( inst->dct );
-	write8( inst->dca );
-	write8( inst->env_flags );
-	write8( inst->setpan );*/
+	mm_align32();
+	inst->parapointer = mm_file_tell_write()-MAS_OFFSET;
+	/*mm_write8( inst->global_volume );
+	mm_write8( (u8)inst->fadeout );
+	mm_write8( inst->random_volume );
+	mm_write8( inst->nna );
+	mm_write8( inst->dct );
+	mm_write8( inst->dca );
+	mm_write8( inst->env_flags );
+	mm_write8( inst->setpan );*/
 
-	write8( inst->global_volume );
-	write8( (u8)inst->fadeout );
-	write8( inst->random_volume );
-	write8( inst->dct );
-	write8( inst->nna );
-	write8( inst->env_flags );
-	write8( inst->setpan );
-	write8( inst->dca );
+	mm_write8( inst->global_volume );
+	mm_write8( (u8)inst->fadeout );
+	mm_write8( inst->random_volume );
+	mm_write8( inst->dct );
+	mm_write8( inst->nna );
+	mm_write8( inst->env_flags );
+	mm_write8( inst->setpan );
+	mm_write8( inst->dca );
 
 	full_notemap = 0;
 	first_notemap_samp = (inst->notemap[0] >> 8);
@@ -134,15 +134,15 @@ void Write_Instrument( Instrument* inst )
 	{
 		// full notemap
 		// write offset here
-		write16( (u16)CalcInstrumentSize( inst ) );
+		mm_write16( (u16)CalcInstrumentSize( inst ) );
 	}
 	else
 	{
 		// single notemap entry
-		write16( (u16)(0x8000 | first_notemap_samp) );
+		mm_write16( (u16)(0x8000 | first_notemap_samp) );
 	}
 
-	write16( 0 );	// reserved space
+	mm_write16( 0 );	// reserved space
 	
 	if( inst->env_flags & 1 )	// write volume envelope
 		Write_Instrument_Envelope( &inst->envelope_volume );
@@ -154,7 +154,7 @@ void Write_Instrument( Instrument* inst )
 	if( full_notemap )
 	{
 		for( y = 0; y < 120; y++ )
-			write16( inst->notemap[y] );	
+			mm_write16( inst->notemap[y] );
 	}
 }
 
@@ -164,14 +164,14 @@ void Write_SampleData( Sample* samp )
 	u32 sample_length = samp->sample_length;
 	u32 sample_looplen = samp->loop_end - samp->loop_start;
 
-	if( target_system == SYSTEM_GBA )
+	if( mm_target_system == SYSTEM_GBA )
 	{
-		write32( sample_length );
-		write32( samp->loop_type ? sample_looplen : 0xFFFFFFFF );
-		write8( SAMP_FORMAT_U8 );
-		write8( BYTESMASHER );
-		write16( (u16) ((samp->frequency * 1024 + (15768/2)) / 15768) );
-	//	write32( 0);
+		mm_write32( sample_length );
+		mm_write32( samp->loop_type ? sample_looplen : 0xFFFFFFFF );
+		mm_write8( SAMP_FORMAT_U8 );
+		mm_write8( BYTESMASHER );
+		mm_write16( (u16) ((samp->frequency * 1024 + (15768/2)) / 15768) );
+	//	mm_write32( 0);
 	}
 	else
 	{
@@ -179,88 +179,88 @@ void Write_SampleData( Sample* samp )
 		{
 			if( samp->loop_type )
 			{
-				write32( samp->loop_start / 2 );
-				write32( (samp->loop_end-samp->loop_start) / 2 );
+				mm_write32( samp->loop_start / 2 );
+				mm_write32( (samp->loop_end-samp->loop_start) / 2 );
 			}
 			else
 			{
-				write32( 0 );
-				write32( sample_length/2 );
+				mm_write32( 0 );
+				mm_write32( sample_length/2 );
 			}
 		}
 		else
 		{
 			if( samp->loop_type )
 			{
-				write32( samp->loop_start / 4 );
-				write32( (samp->loop_end-samp->loop_start) / 4 );
+				mm_write32( samp->loop_start / 4 );
+				mm_write32( (samp->loop_end-samp->loop_start) / 4 );
 			}
 			else
 			{
-				write32( 0 );
-				write32( sample_length/4 );
+				mm_write32( 0 );
+				mm_write32( sample_length/4 );
 			}
 		}
-		write8( sample_dsformat( samp ) );
-		write8( sample_dsreptype( samp ) );
-		write16( (u16) ((samp->frequency * 1024 + (32768/2)) / 32768) );
-		write32( 0);
+		mm_write8( sample_dsformat( samp ) );
+		mm_write8( sample_dsreptype( samp ) );
+		mm_write16( (u16) ((samp->frequency * 1024 + (32768/2)) / 32768) );
+		mm_write32( 0);
 	}
 	
 	// write sample data
 	if( samp->format & SAMPF_16BIT )
 	{
 		for( x = 0; x < sample_length; x++ )
-			write16( ((u16*)samp->data)[x] );
+			mm_write16( ((u16*)samp->data)[x] );
 
 		// add padding data
 		if( samp->loop_type && sample_length >= (samp->loop_start + 2) )
 		{
-			write16( ((u16*)samp->data)[samp->loop_start] );
-			write16( ((u16*)samp->data)[samp->loop_start+1] );
+			mm_write16( ((u16*)samp->data)[samp->loop_start] );
+			mm_write16( ((u16*)samp->data)[samp->loop_start+1] );
 		}
 		else
 		{
-			write16( 0 );
-			write16( 0 );
+			mm_write16( 0 );
+			mm_write16( 0 );
 		}
 	}
 	else
 	{
 		for( x = 0; x < sample_length; x++ )
-			write8( ((u8*)samp->data)[x] );
+			mm_write8( ((u8*)samp->data)[x] );
 
 		// add padding data
 		if( samp->loop_type && sample_length >= (samp->loop_start + 4) )
 		{
-			write8( ((u8*)samp->data)[samp->loop_start] );
-			write8( ((u8*)samp->data)[samp->loop_start+1] );
-			write8( ((u8*)samp->data)[samp->loop_start+2] );
-			write8( ((u8*)samp->data)[samp->loop_start+3] );
+			mm_write8( ((u8*)samp->data)[samp->loop_start] );
+			mm_write8( ((u8*)samp->data)[samp->loop_start+1] );
+			mm_write8( ((u8*)samp->data)[samp->loop_start+2] );
+			mm_write8( ((u8*)samp->data)[samp->loop_start+3] );
 		}
 		else
 		{
 			for ( x = 0; x < 4; x++ )
-				write8( (target_system == SYSTEM_GBA) ? 128 : 0 );
+				mm_write8( (mm_target_system == SYSTEM_GBA) ? 128 : 0 );
 		}
 	}
 }
 
 void Write_Sample( Sample* samp )
 {
-	align32(); // align data by 32 bits
-	samp->parapointer = file_tell_write()-MAS_OFFSET;
+	mm_align32(); // align data by 32 bits
+	samp->parapointer = mm_file_tell_write()-MAS_OFFSET;
 
-	write8( samp->default_volume );
-	write8( samp->default_panning );
-	write16( (u16)(samp->frequency/4) );
-	write8( samp->vibtype );
-	write8( samp->vibdepth );
-	write8( samp->vibspeed );
-	write8( samp->global_volume );
-	write16( samp->vibrate );
+	mm_write8( samp->default_volume );
+	mm_write8( samp->default_panning );
+	mm_write16( (u16)(samp->frequency/4) );
+	mm_write8( samp->vibtype );
+	mm_write8( samp->vibdepth );
+	mm_write8( samp->vibspeed );
+	mm_write8( samp->global_volume );
+	mm_write16( samp->vibrate );
 	
-	write16( samp->msl_index );
+	mm_write16( samp->msl_index );
 	
 	if( samp->msl_index == 0xFFFF )
 		Write_SampleData(samp);
@@ -285,8 +285,8 @@ void Write_Pattern( Pattern* patt, bool xm_vol )
 	
 	PatternEntry* pe;
 	
-	patt->parapointer = file_tell_write()-MAS_OFFSET;
-	write8( (u8)(patt->nrows-1) );
+	patt->parapointer = mm_file_tell_write()-MAS_OFFSET;
+	mm_write8( (u8)(patt->nrows-1) );
 	
 	patt->cmarks[0] = true;
 	emptyvol = xm_vol ? 0 : 255;
@@ -386,19 +386,19 @@ void Write_Pattern( Pattern* patt, bool xm_vol )
 					last_mask[col] = maskvar;
 				}
 
-				write8( chanvar );
+				mm_write8( chanvar );
 				if( chanvar & 128 )
-					write8( maskvar );
+					mm_write8( maskvar );
 				if( maskvar & 1 )
-					write8( pe->note );
+					mm_write8( pe->note );
 				if( maskvar & 2 )
-					write8( pe->inst );
+					mm_write8( pe->inst );
 				if( maskvar & 4 )
-					write8( pe->vol );
+					mm_write8( pe->vol );
 				if( maskvar & 8 )
 				{
-					write8( pe->fx );
-					write8( pe->param );
+					mm_write8( pe->fx );
+					mm_write8( pe->param );
 				}
 			}
 			else
@@ -406,7 +406,7 @@ void Write_Pattern( Pattern* patt, bool xm_vol )
 				continue;
 			}
 		}
-		write8( 0 );
+		mm_write8( 0 );
 	}
 	
 }
@@ -482,25 +482,25 @@ int Write_MAS( MAS_Module* mod, bool verbose, bool msl_dep )
 //	u16 rsamps[200];
 //	bool unique=false;
 
-	file_get_byte_count();
+	mm_file_get_byte_count();
 
-	write32( BYTESMASHER );
-	write8( MAS_TYPE_SONG );
-	write8(	MAS_VERSION );
-	write8( BYTESMASHER );
-	write8( BYTESMASHER );
+	mm_write32( BYTESMASHER );
+	mm_write8( MAS_TYPE_SONG );
+	mm_write8(	MAS_VERSION );
+	mm_write8( BYTESMASHER );
+	mm_write8( BYTESMASHER );
 	
-	MAS_OFFSET = file_tell_write();
+	MAS_OFFSET = mm_file_tell_write();
 
-	write8( (u8)mod->order_count );
-	write8( mod->inst_count );
-	write8( mod->samp_count );
-	write8( mod->patt_count );
-	write8( (u8)((mod->link_gxx ? 1 : 0) | (mod->old_effects ? 2 : 0) | (mod->freq_mode ? 4 : 0) | (mod->xm_mode ? 8 : 0) | (msl_dep ? 16 : 0) | (mod->old_mode ? 32 : 0)) );
-	write8( mod->global_volume );
-	write8( mod->initial_speed );
-	write8( mod->initial_tempo );
-	write8( mod->restart_pos );
+	mm_write8( (u8)mod->order_count );
+	mm_write8( mod->inst_count );
+	mm_write8( mod->samp_count );
+	mm_write8( mod->patt_count );
+	mm_write8( (u8)((mod->link_gxx ? 1 : 0) | (mod->old_effects ? 2 : 0) | (mod->freq_mode ? 4 : 0) | (mod->xm_mode ? 8 : 0) | (msl_dep ? 16 : 0) | (mod->old_mode ? 32 : 0)) );
+	mm_write8( mod->global_volume );
+	mm_write8( mod->initial_speed );
+	mm_write8( mod->initial_tempo );
+	mm_write8( mod->restart_pos );
 	
 /*	for( x = 0; x < mod->samp_count; x++ )
 	{
@@ -521,42 +521,42 @@ int Write_MAS( MAS_Module* mod, bool verbose, bool msl_dep )
 			rsamp++;
 		}
 	}
-	write8( rsamp );*/
-	write8( BYTESMASHER );
-	write8( BYTESMASHER );write8( BYTESMASHER );
+	mm_write8( rsamp );*/
+	mm_write8( BYTESMASHER );
+	mm_write8( BYTESMASHER );mm_write8( BYTESMASHER );
 	for( x = 0; x < MAX_CHANNELS; x++ )
-		write8( mod->channel_volume[x] );
+		mm_write8( mod->channel_volume[x] );
 	for( x = 0; x < MAX_CHANNELS; x++ )
-		write8( mod->channel_panning[x] );
+		mm_write8( mod->channel_panning[x] );
 	for( x = 0; x < mod->order_count; x++ )
 	{
 		if( mod->orders[x] < 254 )
 		{
 			if( mod->orders[x] < mod->patt_count )
-				write8( mod->orders[x] );
+				mm_write8( mod->orders[x] );
 			else
-				write8( 254 );
+				mm_write8( 254 );
 		}
 		else
 		{
-			write8( mod->orders[x] );
+			mm_write8( mod->orders[x] );
 		}
 	}
 	for( ; x < 200; x++ )
-		write8( 255 );
+		mm_write8( 255 );
 	// reserve space for offsets
-	fpos_pointer = file_tell_write();
+	fpos_pointer = mm_file_tell_write();
 	for( x = 0; x < mod->inst_count*4+mod->samp_count*4+mod->patt_count*4; x++ )
-		write8( BYTESMASHER ); // BA BA BLACK SHEEP
-/*	if( msl_dep && target_system == SYSTEM_NDS )
+		mm_write8( BYTESMASHER ); // BA BA BLACK SHEEP
+/*	if( msl_dep && mm_target_system == SYSTEM_NDS )
 	{
 		for( x = 0; x < rsamp; x++ )	// write sample indeces
-			write16( rsamps[x] );
+			mm_write16( rsamps[x] );
 	}*/
 	// WRITE INSTRUMENTS
 
 	if( verbose )
-		printf("Header: %i bytes\n", file_get_byte_count() );
+		printf("Header: %i bytes\n", mm_file_get_byte_count() );
 
 	for( x = 0; x < mod->inst_count; x++ )
 		Write_Instrument( &mod->instruments[x] );
@@ -567,7 +567,7 @@ int Write_MAS( MAS_Module* mod, bool verbose, bool msl_dep )
 		Write_Sample( &mod->samples[x] );
 
 	if( verbose )
-		printf("Instruments: %i bytes\n", file_get_byte_count() );
+		printf("Instruments: %i bytes\n", mm_file_get_byte_count() );
 	
 	Mark_Patterns( mod );
 	for( x = 0; x < mod->patt_count; x++ )
@@ -578,29 +578,29 @@ int Write_MAS( MAS_Module* mod, bool verbose, bool msl_dep )
 				Write_Pattern( &mod->patterns[x], mod->xm_mode );
 //		}
 	}
-	align32();
+	mm_align32();
 
 	if( verbose )
-		printf("Patterns: %i bytes\n", file_get_byte_count() );
-	MAS_FILESIZE = file_tell_write() - MAS_OFFSET;
-	file_seek_write( MAS_OFFSET-8, SEEK_SET );
-	write32( MAS_FILESIZE );
-	file_seek_write( fpos_pointer, SEEK_SET );
+		printf("Patterns: %i bytes\n", mm_file_get_byte_count() );
+	MM_MAS_FILESIZE = mm_file_tell_write() - MAS_OFFSET;
+	mm_file_seek_write( MAS_OFFSET-8, SEEK_SET );
+	mm_write32( MM_MAS_FILESIZE );
+	mm_file_seek_write( fpos_pointer, SEEK_SET );
 	for( x = 0; x < mod->inst_count; x++ )
-		write32( mod->instruments[x].parapointer );
+		mm_write32( mod->instruments[x].parapointer );
 	for( x = 0; x < mod->samp_count; x++ )
 	{
 		if( verbose )
 		{
 			printf("sample %s is at %d/%d of %d\n", mod->samples[x].name, mod->samples[x].parapointer,
-				file_tell_write(), mod->samples[x].sample_length);
+				mm_file_tell_write(), mod->samples[x].sample_length);
 		}
 
-		write32( mod->samples[x].parapointer );
+		mm_write32( mod->samples[x].parapointer );
 	}
 	for( x = 0; x < mod->patt_count; x++ )
-		write32( mod->patterns[x].parapointer );
-	return MAS_FILESIZE;	
+		mm_write32( mod->patterns[x].parapointer );
+	return MM_MAS_FILESIZE;
 }
 
 void Delete_Module( MAS_Module* mod )

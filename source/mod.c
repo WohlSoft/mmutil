@@ -53,7 +53,7 @@
 #endif
 
 #ifdef _MSC_VER
-double round( double value )
+static double round( double value )
 {
 	return floor(value+0.5);
 }
@@ -80,7 +80,7 @@ int Load_MOD_SampleData( Sample* samp )
 		samp->data = (u8*)malloc( samp->sample_length ); // allocate a SAMPLE_LENGTH sized pointer to buffer in memory and load the sample into it
 		for( t = 0; t < samp->sample_length; t++ )
 		{
-			((u8*)samp->data)[t] = read8() + 128; // unsign data
+			((u8*)samp->data)[t] = mm_read8() + 128; // unsign data
 		}
 	}
 	FixSample( samp );
@@ -116,10 +116,10 @@ int Load_MOD_Pattern( Pattern* patt, u8 nchannels, u8* inst_count )
 	{
 		for( col = 0; col < nchannels; col++ )
 		{
-			data1 = read8();	// +-------------------------------------+
-			data2 = read8();	// | Byte 0    Byte 1   Byte 2   Byte 3  |
-			data3 = read8();	// |-------------------------------------|
-			data4 = read8();	// |aaaaBBBB CCCCCCCCC DDDDeeee FFFFFFFFF|
+			data1 = mm_read8();	// +-------------------------------------+
+			data2 = mm_read8();	// | Byte 0    Byte 1   Byte 2   Byte 3  |
+			data3 = mm_read8();	// |-------------------------------------|
+			data4 = mm_read8();	// |aaaaBBBB CCCCCCCCC DDDDeeee FFFFFFFFF|
 								// +-------------------------------------+
 
 			period = (data1&0xf)*256 + (data2);	// BBBBCCCCCCCC = sample period value
@@ -163,16 +163,16 @@ int Load_MOD_Sample( Sample* samp, bool verbose, int index )
 	memset( samp, 0, sizeof( Sample ) );
 	samp->msl_index = 0xFFFF;
 	for( x = 0; x < 22; x++ )
-		samp->name[x] = read8();									// read in 22 bytes, store as SAMPLE_NAME
+		samp->name[x] = mm_read8();									// read in 22 bytes, store as SAMPLE_NAME
 	for( x = 0; x < 12; x++ )				// copy to filename
 		samp->filename[x] = samp->name[x];
-	samp->sample_length = (read8()*256 + read8()) * 2;				// read in 2 bytes (word), store as SAMPLE_LENGTH
-	finetune = read8();												// read in 1 byte,         store as FINE_TUNE
+	samp->sample_length = (mm_read8()*256 + mm_read8()) * 2;				// read in 2 bytes (word), store as SAMPLE_LENGTH
+	finetune = mm_read8();												// read in 1 byte,         store as FINE_TUNE
 	if( finetune >= 8 ) finetune -= 16;
 	
-	samp->default_volume = read8();									// read in 1 byte,         store as VOLUME
-	samp->loop_start = (read8()*256 + read8()) * 2;					// read in 2 bytes (word), store as LOOP_START
-	samp->loop_end = samp->loop_start + (read8()*256+read8())*2;	// read in 2 bytes (word), store as LOOP_LENGTH
+	samp->default_volume = mm_read8();									// read in 1 byte,         store as VOLUME
+	samp->loop_start = (mm_read8()*256 + mm_read8()) * 2;					// read in 2 bytes (word), store as LOOP_START
+	samp->loop_end = samp->loop_start + (mm_read8()*256+mm_read8())*2;	// read in 2 bytes (word), store as LOOP_LENGTH
 
 	// IS THIS WRONG?? :
 	samp->frequency = (int)(8363.0 * pow( 2.0, ((double)finetune) * (1.0/192.0) ) );	// calculate frequency...
@@ -228,9 +228,9 @@ int Load_MOD( MAS_Module* mod, bool verbose )
 		printf( "Loading MOD, " );
 
 	memset( mod, 0, sizeof( MAS_Module ) );
-	file_start = file_tell_read();
-	file_seek_read( 0x438, SEEK_SET );	// Seek to offset 1080 (438h) in the file
-	sig = read32();						// read in 4 bytes
+	file_start = mm_file_tell_read();
+	mm_file_seek_read( 0x438, SEEK_SET );	// Seek to offset 1080 (438h) in the file
+	sig = mm_read32();						// read in 4 bytes
 	sigs[0]=sig&0xFF;
 	sigs[1]=(sig>>8)&0xFF;
 	sigs[2]=(sig>>16)&0xFF;
@@ -283,9 +283,9 @@ int Load_MOD( MAS_Module* mod, bool verbose )
 		}
 	}
 
-	file_seek_read( file_start, SEEK_SET );	// - Seek back to position 0, the start of the file
+	mm_file_seek_read( file_start, SEEK_SET );	// - Seek back to position 0, the start of the file
 	for( x = 0; x < 20; x++ )
-		mod->title[x] = read8();			// - read in 20 bytes, store as MODULE_NAME.
+		mod->title[x] = mm_read8();			// - read in 20 bytes, store as MODULE_NAME.
 
 	if( verbose )
 	{
@@ -296,9 +296,9 @@ int Load_MOD( MAS_Module* mod, bool verbose )
 	for( x = 0; x < MAX_CHANNELS; x++ )
 	{
 		if( (x&3)!=1 && (x&3) != 2 )
-			mod->channel_panning[x] = clamp_u8( 128 - (PANNING_SEP/2) );
+			mod->channel_panning[x] = clamp_u8( 128 - (MM_PANNING_SEP/2) );
 		else
-			mod->channel_panning[x] = clamp_u8( 128 + (PANNING_SEP/2) );
+			mod->channel_panning[x] = clamp_u8( 128 + (MM_PANNING_SEP/2) );
 		mod->channel_volume[x] = 64;
 	}
 	
@@ -339,19 +339,19 @@ int Load_MOD( MAS_Module* mod, bool verbose )
 	}
 	
 	// read sequence
-	mod->order_count = read8();	// read a byte, store as SONG_LENGTH (this is the number of orders in a song)
-	mod->restart_pos = read8();	// read a byte, discard it (this is the UNUSED byte - used to be used in PT as the restart position, but not now since jump to pattern was introduced)
+	mod->order_count = mm_read8();	// read a byte, store as SONG_LENGTH (this is the number of orders in a song)
+	mod->restart_pos = mm_read8();	// read a byte, discard it (this is the UNUSED byte - used to be used in PT as the restart position, but not now since jump to pattern was introduced)
 	if( mod->restart_pos >= 127 )
 		mod->restart_pos=0;
 	npatterns=0;				// set NUMBER_OF_PATTERNS to equal 0......... or -1 :)
 	for( x = 0; x < 128; x++ )	// from this point, loop 128 times
 	{
-		mod->orders[x] = read8();			// read 1 byte, store it as ORDER <loopcounter>
+		mod->orders[x] = mm_read8();			// read 1 byte, store it as ORDER <loopcounter>
 		if( mod->orders[x] >= npatterns )	// if this value was bigger than NUMBER_OF_PATTERNS then set it to that value.
 			npatterns=mod->orders[x]+1;
 	}
 	
-	read32();								// read 4 bytes, discard them (we are at position 1080 again, this is M.K. etc!)
+	mm_read32();								// read 4 bytes, discard them (we are at position 1080 again, this is M.K. etc!)
 	mod->patt_count = npatterns;
 	mod->patterns = (Pattern*)malloc( mod->patt_count * sizeof( Pattern ) );	// allocate patterns
 

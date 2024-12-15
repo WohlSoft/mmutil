@@ -401,9 +401,9 @@ void Write_GBA( void )
 	unsigned int x;
 
 	for( x = 0; x < sizeof( GBA_ROM ); x++ )
-		write8( GBA_ROM[x] );
+		mm_write8( GBA_ROM[x] );
 
 	for( ; x < 0x3400-4; x++ )
-		write8( x );
+		mm_write8( x );
 }
 

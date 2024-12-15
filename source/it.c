@@ -78,7 +78,7 @@ bool Load_IT_Envelope( Instrument_Envelope* env, bool unsign )
 
 	memset( env, 0, sizeof( Instrument_Envelope ) );
 
-	a=read8();
+	a=mm_read8();
 	
 	if( a & 1 )
 		env_enabled = true;
@@ -104,38 +104,38 @@ bool Load_IT_Envelope( Instrument_Envelope* env, bool unsign )
 		env->env_filter=env_filter;
 	}
 	
-	node_count=read8();
+	node_count=mm_read8();
 	if( node_count != 0 )
 		env->env_valid=true;
 	
 	env->node_count = node_count;
 	if( env_loop )
 	{
-		env->loop_start=read8();
-		env->loop_end=read8();
+		env->loop_start=mm_read8();
+		env->loop_end=mm_read8();
 	}
 	else
 	{
-		skip8( 2 );
+		mm_skip8( 2 );
 	}
 	if( env_sus )
 	{
-		env->sus_start=read8();
-		env->sus_end=read8();
+		env->sus_start=mm_read8();
+		env->sus_end=mm_read8();
 	}
 	else
 	{
-		skip8( 2 );
+		mm_skip8( 2 );
 	}
 	for( x = 0; x < 25; x++ )
 	{
-		env->node_y[x] = read8();
+		env->node_y[x] = mm_read8();
 		if( unsign )
 			env->node_y[x] += 32;
-		env->node_x[x] = read16();
+		env->node_x[x] = mm_read16();
 		
 	}
-	read8(); // unused byte
+	mm_read8(); // unused byte
 	env->env_enabled = env_enabled;
 	return env_enabled;
 }
@@ -147,25 +147,25 @@ int Load_IT_Instrument( Instrument* inst, bool verbose, int index )
 
 	memset( inst, 0, sizeof( Instrument ) );
 
-	skip8( 17 );
-	inst->nna		=read8();
-	inst->dct		=read8();
-	inst->dca		=read8();
-	a=read16(); if( a > 255 ) a = 255;
+	mm_skip8( 17 );
+	inst->nna		=mm_read8();
+	inst->dct		=mm_read8();
+	inst->dca		=mm_read8();
+	a=mm_read16(); if( a > 255 ) a = 255;
 	inst->fadeout	=(u8)a;
-	skip8( 2 );
-	inst->global_volume		=read8();
-	a= read8();
+	mm_skip8( 2 );
+	inst->global_volume		=mm_read8();
+	a= mm_read8();
 	a = (a&128) | ((a&127)*2 > 127 ? 127 : (a&127)*2);
 	inst->setpan			=a^128;
-	inst->random_volume		=read8();
-	skip8( 5 );
+	inst->random_volume		=mm_read8();
+	mm_skip8( 5 );
 	for( x = 0; x < 26; x++ )
-		inst->name[x] = read8();
-	skip8( 6 );
+		inst->name[x] = mm_read8();
+	mm_skip8( 6 );
 	
 	for( x = 0; x < 120; x++ )
-		inst->notemap[x] = read16();
+		inst->notemap[x] = mm_read16();
 	
 	inst->env_flags=0;
 	
@@ -219,7 +219,7 @@ int Load_IT_Instrument( Instrument* inst, bool verbose, int index )
 		printf( "%s\n", inst->name );*/
 	}
 
-	skip8( 7 );
+	mm_skip8( 7 );
 	return 0;
 }
 
@@ -252,42 +252,42 @@ int Load_IT_Sample( Sample* samp )
 	memset( samp, 0, sizeof( Sample ) );
 	samp->msl_index = 0xFFFF;
 
-	if( read32() != 'SPMI' )
+	if( mm_read32() != 'SPMI' )
 		return ERR_UNKNOWNSAMPLE;
 	for( x = 0; x < 12; x++ )	// dos filename
-		samp->filename[x] = read8();
-	if( read8() != 0 )
+		samp->filename[x] = mm_read8();
+	if( mm_read8() != 0 )
 		return ERR_UNKNOWNSAMPLE;
-	samp->global_volume = read8();
-	a = read8();
+	samp->global_volume = mm_read8();
+	a = mm_read8();
 	samp->it_compression = a & 8 ? 1 : 0;
 	bit16 = a & 2;
 	hasloop = a & 16;
 	pingpong = a & 64;
-	samp->default_volume = read8();
+	samp->default_volume = mm_read8();
 	for( x = 0; x < 26; x++ )
-		samp->name[x] = read8();
-	a=read8();
-	samp->default_panning = read8();
+		samp->name[x] = mm_read8();
+	a=mm_read8();
+	samp->default_panning = mm_read8();
 	samp->default_panning = (((samp->default_panning&127) == 64) ? 127 : (samp->default_panning<<1)) | (samp->default_panning&128);
 	if( !(a & 1) )
 		samp_unsigned=true;
-	samp_length = read32();
-	loop_start=read32();
-	loop_end=read32();
-	c5spd=read32();
+	samp_length = mm_read32();
+	loop_start=mm_read32();
+	loop_end=mm_read32();
+	c5spd=mm_read32();
 	
 	samp->frequency			= c5spd;
 	samp->sample_length		= samp_length;
 	samp->loop_start		= loop_start;
 	samp->loop_end			= loop_end;
 	
-	skip8( 8 ); // susloop start/end
-	data_address = read32();
-	samp->vibspeed = read8();
-	samp->vibdepth = read8();
-	samp->vibrate = read8();
-	samp->vibtype = read8();
+	mm_skip8( 8 ); // susloop start/end
+	data_address = mm_read32();
+	samp->vibspeed = mm_read8();
+	samp->vibdepth = mm_read8();
+	samp->vibrate = mm_read8();
+	samp->vibtype = mm_read8();
 	samp->datapointer = data_address;
 	if( hasloop )
 	{
@@ -327,11 +327,11 @@ int Load_IT_SampleData( Sample* samp, u16 cwmt )
 			{
 				if( !(samp->format & SAMPF_SIGNED) )
 				{
-					a = (unsigned short)read16();
+					a = (unsigned short)mm_read16();
 				}
 				else
 				{
-					a = (signed short)read16();
+					a = (signed short)mm_read16();
 					a += 32768;
 				}
 				((u16*)samp->data)[x] = (u16)a;
@@ -340,11 +340,11 @@ int Load_IT_SampleData( Sample* samp, u16 cwmt )
 			{
 				if( !(samp->format & SAMPF_SIGNED) )
 				{
-					a = (unsigned char)read8();
+					a = (unsigned char)mm_read8();
 				}
 				else
 				{
-					a = (signed char)read8();
+					a = (signed char)mm_read8();
 					a += 128;
 				}
 				((u8*)samp->data)[x] = (u8)a;
@@ -389,9 +389,9 @@ int Load_IT_Pattern( Pattern* patt )
 	
 	memset( patt, 0, sizeof( Pattern ) );
 	
-	clength = read16();
-	patt->nrows = read16();
-	skip8(4);
+	clength = mm_read16();
+	patt->nrows = mm_read16();
+	mm_skip8(4);
 
 	patt->clength = clength;
 
@@ -407,7 +407,7 @@ int Load_IT_Pattern( Pattern* patt )
 	for( x = 0; x < patt->nrows; x++ )
 	{
 GetNextChannelMarker:
-		chanvar = read8();					// Read byte into channelvariable.
+		chanvar = mm_read8();					// Read byte into channelvariable.
 		if( chanvar == 0 )					// if(channelvariable = 0) then end of row
 			continue;					
 		
@@ -416,33 +416,33 @@ GetNextChannelMarker:
 			return ERR_MANYCHANNELS;
 		
 		if( chanvar & 128 )					// if(channelvariable & 128) then read byte into maskvariable
-			old_maskvar[chan] = read8();
+			old_maskvar[chan] = mm_read8();
 		
 		maskvar = old_maskvar[chan];
 		
 		if( maskvar & 1 )					// if(maskvariable & 1), then read note. (byte value)
 		{
-			old_note[chan] = read8();
+			old_note[chan] = mm_read8();
 			patt->data[x*MAX_CHANNELS+chan].note = old_note[chan];
 		}
 		
 		if( maskvar & 2 )					// if(maskvariable & 2), then read instrument (byte value)
 		{
-			old_inst[chan] = read8();
+			old_inst[chan] = mm_read8();
 			patt->data[x*MAX_CHANNELS+chan].inst = old_inst[chan];
 		}
 		
 		if( maskvar & 4 )					// if(maskvariable & 4), then read volume/panning (byte value)
 		{
-			old_vol[chan] = read8();
+			old_vol[chan] = mm_read8();
 			patt->data[x*MAX_CHANNELS+chan].vol = old_vol[chan];
 		}
 
 		if( maskvar & 8 )					// if(maskvariable & 8), then read command (byte value) and commandvalue
 		{
-			old_fx[chan] = read8();
+			old_fx[chan] = mm_read8();
 			patt->data[x*MAX_CHANNELS+chan].fx = old_fx[chan];
-			old_param[chan] = read8();
+			old_param[chan] = mm_read8();
 			patt->data[x*MAX_CHANNELS+chan].param = old_param[chan];
 		}
 
@@ -481,29 +481,29 @@ int Load_IT( MAS_Module* itm, bool verbose )
 	
 	memset( itm, 0, sizeof( MAS_Module ) );
 
-	if( read32() != 'MPMI' )
+	if( mm_read32() != 'MPMI' )
 		return ERR_INVALID_MODULE;
 	for( x = 0; x < 28; x++ )
-		itm->title[x] = read8();
-	itm->order_count	= (u16)read16();
-	itm->inst_count		= (u8)read16();
-	itm->samp_count		= (u8)read16();
-	itm->patt_count		= (u8)read16();
-	cwt = read16();
+		itm->title[x] = mm_read8();
+	itm->order_count	= (u16)mm_read16();
+	itm->inst_count		= (u8)mm_read16();
+	itm->samp_count		= (u8)mm_read16();
+	itm->patt_count		= (u8)mm_read16();
+	cwt = mm_read16();
 	(void)cwt; // uncertain why unused
-	cmwt = read16(); // upward compatible
-	//skip8( 4 );	// created with tracker / upward compatible
-	w = read16(); // flags
+	cmwt = mm_read16(); // upward compatible
+	//mm_skip8( 4 );	// created with tracker / upward compatible
+	w = mm_read16(); // flags
 	itm->stereo = w & 1;
 	itm->inst_mode = instr_mode = w & 4;
 	itm->freq_mode = w & 8;
 	itm->old_effects = w & 16;
 	itm->link_gxx = w & 32;
-	skip8( 2 ); // special
-	itm->global_volume = read8();
-	skip8( 1 ); // mix volume
-	itm->initial_speed = read8();
-	itm->initial_tempo = read8();
+	mm_skip8( 2 ); // special
+	itm->global_volume = mm_read8();
+	mm_skip8( 1 ); // mix volume
+	itm->initial_speed = mm_read8();
+	itm->initial_tempo = mm_read8();
 
 	if( verbose )
 	{
@@ -523,32 +523,32 @@ int Load_IT( MAS_Module* itm, bool verbose )
 		printf( "Instruments..%s\n", instr_mode ? "Yes" : "Will be supplied" );
 		printf( vstr_it_div );
 	}
-	skip8( 12 ); //	SEP, PWD, MSGLENGTH, MESSAGE OFFSET, [RESERVED]
+	mm_skip8( 12 ); //	SEP, PWD, MSGLENGTH, MESSAGE OFFSET, [RESERVED]
 	for( x = 0; x < 64; x++ )
 	{
-		b = read8();
+		b = mm_read8();
 		if( x < MAX_CHANNELS )
 			itm->channel_panning[x] = b*4 > 255 ? 255 : b*4;	// map 0->64 to 0->255
 	}
 	for( x = 0; x < 64; x++ )
 	{
-		b = read8();
+		b = mm_read8();
 		if( x < MAX_CHANNELS )
 			itm->channel_volume[x] = b;
 	}
 	for( x = 0; x < itm->order_count; x++ )
-		itm->orders[x] = read8();
+		itm->orders[x] = mm_read8();
 	
 	parap_inst = (u32*)malloc( itm->inst_count * sizeof( u32 ) );
 	parap_samp = (u32*)malloc( itm->samp_count * sizeof( u32 ) );
 	parap_patt = (u32*)malloc( itm->patt_count * sizeof( u32 ) );
 	
 	for( x = 0; x < itm->inst_count; x++ )
-		parap_inst[x] = read32();
+		parap_inst[x] = mm_read32();
 	for( x = 0; x < itm->samp_count; x++ )
-		parap_samp[x] = read32();
+		parap_samp[x] = mm_read32();
 	for( x = 0; x < itm->patt_count; x++ )
-		parap_patt[x] = read32();
+		parap_patt[x] = mm_read32();
 	
 	itm->samples = (Sample*)malloc( itm->samp_count * sizeof( Sample ) );
 	itm->patterns = (Pattern*)malloc( itm->patt_count * sizeof( Pattern ) );
@@ -572,7 +572,7 @@ int Load_IT( MAS_Module* itm, bool verbose )
 		{
 		//	if( verbose )
 		//		printf( "%i	", x+1 );
-			file_seek_read( parap_inst[x], SEEK_SET );
+			mm_file_seek_read( parap_inst[x], SEEK_SET );
 			Load_IT_Instrument( &itm->instruments[x], verbose, x );
 		}
 
@@ -596,7 +596,7 @@ int Load_IT( MAS_Module* itm, bool verbose )
 	// read samples
 	for( x = 0; x < itm->samp_count; x++ )
 	{
-		file_seek_read( parap_samp[x], SEEK_SET );
+		mm_file_seek_read( parap_samp[x], SEEK_SET );
 		Load_IT_Sample( &itm->samples[x] );
 		if( verbose )
 		{
@@ -652,7 +652,7 @@ int Load_IT( MAS_Module* itm, bool verbose )
 	cc=0;
 	for( x = 0; x < itm->patt_count; x++ )
 	{
-		file_seek_read( parap_patt[x], SEEK_SET );
+		mm_file_seek_read( parap_patt[x], SEEK_SET );
 		if( parap_patt[x] != 0 )
 		{
 			if( verbose )
@@ -686,7 +686,7 @@ int Load_IT( MAS_Module* itm, bool verbose )
 	// read sample data
 	for( x = 0; x < itm->samp_count; x++ )
 	{
-		file_seek_read( itm->samples[x].datapointer, SEEK_SET );
+		mm_file_seek_read( itm->samples[x].datapointer, SEEK_SET );
 		Load_IT_SampleData( &itm->samples[x], cmwt );
 	}
 
@@ -712,14 +712,14 @@ int Load_IT_CompressedSampleBlock( u8** buffer )
 {
 	u32 size;
 	u32 x;
-	size = read16();
+	size = mm_read16();
 	(*buffer) = (u8*)malloc( size+4 );
 	(*buffer)[size+0]=0;
 	(*buffer)[size+1]=0;
 	(*buffer)[size+2]=0;
 	(*buffer)[size+3]=0;
 	for( x = 0; x < size; x++ )
-		(*buffer)[x] = read8();
+		(*buffer)[x] = mm_read8();
 	return ERR_NONE;
 }
 

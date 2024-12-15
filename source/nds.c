@@ -78,95 +78,95 @@ void Write_NDS( void )
 	const char game_title[] = "SOUND TEST ";
 
 	for( unsigned int x = 0; x < 12; x++ )
-		write8( game_title[x] );
+		mm_write8( game_title[x] );
 
-	write32( '####' );	// gamecode
-	write16( 0 );	// makercode
-	write8( 0 );	// unit code (Nintendo DS)
-	write8( 0 );	// encryption seed
-	write8( 0 );	// device capability
+	mm_write32( '####' );	// gamecode
+	mm_write16( 0 );	// makercode
+	mm_write8( 0 );	// unit code (Nintendo DS)
+	mm_write8( 0 );	// encryption seed
+	mm_write8( 0 );	// device capability
 	for( unsigned int x = 0; x < 9; x++ )
-		write8( 0 );	// reserved
-	write8( 0 );	// rom version
-	write8( 4 );	// autostart
+		mm_write8( 0 );	// reserved
+	mm_write8( 0 );	// rom version
+	mm_write8( 4 );	// autostart
 
 //-----------------------------------------------------------
-	write32( 512+32768 ); // arm9 ROM offset
-	write32( 0x2000000 ); // arm9 entry point
-	write32( 0x2000000 ); // arm9 ram address
-	write32( 65536 ); // arm9 binary size (modify later)
+	mm_write32( 512+32768 ); // arm9 ROM offset
+	mm_write32( 0x2000000 ); // arm9 entry point
+	mm_write32( 0x2000000 ); // arm9 ram address
+	mm_write32( 65536 ); // arm9 binary size (modify later)
 //-----------------------------------------------------------
-	write32( 512 );			// arm7 ROM offset
-	write32( 0x37f8000 );	// arm7 entry point
-	write32( 0x37f8000 );	// arm7 ram address
-	write32( 32768 );	// arm7 binary size
+	mm_write32( 512 );			// arm7 ROM offset
+	mm_write32( 0x37f8000 );	// arm7 entry point
+	mm_write32( 0x37f8000 );	// arm7 ram address
+	mm_write32( 32768 );	// arm7 binary size
 //-----------------------------------------------------------
 	
-	write32( 0 );			// fnt address
-	write32( 0 );			// fnt size
-	write32( 0 );			// fat address
-	write32( 0 );			// fat size
+	mm_write32( 0 );			// fnt address
+	mm_write32( 0 );			// fnt size
+	mm_write32( 0 );			// fat address
+	mm_write32( 0 );			// fat size
 
-	write32( 0 );			// file arm9 overlay address
-	write32( 0 );			// file arm9 overlay size
-	write32( 0 );			// file arm7 overlay address
-	write32( 0 );			// file arm7 overlay size
+	mm_write32( 0 );			// file arm9 overlay address
+	mm_write32( 0 );			// file arm9 overlay size
+	mm_write32( 0 );			// file arm7 overlay address
+	mm_write32( 0 );			// file arm7 overlay size
 	
-	write32( 0x7f7fff );	// port 40001a4 setting for normal commands
-	write32( 0x203f1fff );	// port 40001a4 setting for KEY1 commands
+	mm_write32( 0x7f7fff );	// port 40001a4 setting for normal commands
+	mm_write32( 0x203f1fff );	// port 40001a4 setting for KEY1 commands
 	
-	write32( 0 );			// icon (no icon)
+	mm_write32( 0 );			// icon (no icon)
 	
-	write16( 0 );			// secure area checksum
-	write16( 0x51e );		// secure area loading timeout
-	write32( 0 );			// arm9 auto load list RAM address (?)
-	write32( 0 );			// arm7 auto load list RAM address (?)
-	write32( 0 );			// secure area disable
-	write32( 0 );			// secure area disable
+	mm_write16( 0 );			// secure area checksum
+	mm_write16( 0x51e );		// secure area loading timeout
+	mm_write32( 0 );			// arm9 auto load list RAM address (?)
+	mm_write32( 0 );			// arm7 auto load list RAM address (?)
+	mm_write32( 0 );			// secure area disable
+	mm_write32( 0 );			// secure area disable
 	
-	write32( 0x14400 );		// total used ROM size
-	write32( 0x200 );		// rom header size
+	mm_write32( 0x14400 );		// total used ROM size
+	mm_write32( 0x200 );		// rom header size
 	
-	write32( 0 );
-	write32( 0 );
-	write32( 0 );
-	write32( 0 );
-	write32( 0 );
-	write32( 0 );
-	write32( 'MARS' );
-	write32( '11V_' );
-	write8( '0' );
-	write8( 0 );write8( 0 );write8( 0 );
-	write32( 'SSAP' );
-	write8( '0' );write8( '1' );write8( 0x96 );write8( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 'MARS' );
+	mm_write32( '11V_' );
+	mm_write8( '0' );
+	mm_write8( 0 );mm_write8( 0 );mm_write8( 0 );
+	mm_write32( 'SSAP' );
+	mm_write8( '0' );mm_write8( '1' );mm_write8( 0x96 );mm_write8( 0 );
 
-	write32( 0 );
-	write32( 0 );
-	write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
+	mm_write32( 0 );
 
 	for( unsigned int x = 0; x < 0x9c; x++ )
-		write8( nds_logo[x] );		// NINTENDO LOGO
+		mm_write8( nds_logo[x] );		// NINTENDO LOGO
 
-	write16( 0x9e1a );		// nintendo logo checksum
-	write16( 0 );			// header checksum (modify later)
-	write32( 0 );			// debug rom offset
-	write32( 0 );			// debug rom size
-	write32( 0 );			// debug ram address
+	mm_write16( 0x9e1a );		// nintendo logo checksum
+	mm_write16( 0 );			// header checksum (modify later)
+	mm_write32( 0 );			// debug rom offset
+	mm_write32( 0 );			// debug rom size
+	mm_write32( 0 );			// debug ram address
 
-	write32( 0 );			// reserved
+	mm_write32( 0 );			// reserved
 
 	for( unsigned int x = 0; x < 0x90; x++ )
-		write8( 0 );
+		mm_write8( 0 );
 
 	// write binaries
 	for( unsigned int x = 0; x < ARM7_SIZE; x++ )
-		write8( arm7_bin[x] );
+		mm_write8( arm7_bin[x] );
 	for( unsigned int x = 0; x < 32768-ARM7_SIZE; x++ )	// pad to 32k
-		write8( (u8)x );
+		mm_write8( (u8)x );
 	for( unsigned int x = 0; x < ARM9_SIZE; x++ )
-		write8( arm9_bin[x] );
+		mm_write8( arm9_bin[x] );
 	for( unsigned int x = 0; x < 65536-ARM9_SIZE; x++ )	// pad to 64k
-		write8( (u8)x );
+		mm_write8( (u8)x );
 }
 
 unsigned short calculate_crc( void )
@@ -175,7 +175,7 @@ unsigned short calculate_crc( void )
 	unsigned short crc = 0xFFFF;
 	for ( i=0; i<0x15E; i++)
 	{
-		unsigned char data = read8();
+		unsigned char data = mm_read8();
 		crc = (crc >> 8) ^ crc16tab[(crc ^ data) & 0xFF];
 	}
 	return crc;
@@ -186,34 +186,34 @@ void Validate_NDS( char* filename, int output_size )
 	int arm9_size;
 	int header_crc;
 	arm9_size = 65536 + output_size;
-	file_open_write_end( filename );
-	file_seek_write( 0x2c, SEEK_SET );
-	write32( arm9_size );
-	file_seek_write( 0x80, SEEK_SET );
-	write32( arm9_size+32768 );		// total used rom size
-	file_close_write();
+	mm_file_open_write_end( filename );
+	mm_file_seek_write( 0x2c, SEEK_SET );
+	mm_write32( arm9_size );
+	mm_file_seek_write( 0x80, SEEK_SET );
+	mm_write32( arm9_size+32768 );		// total used rom size
+	mm_file_close_write();
 
-	file_open_read( filename );
+	mm_file_open_read( filename );
 	header_crc=calculate_crc();
-	file_close_read();
+	mm_file_close_read();
 	header_crc &= 0xFFFF;
 
-	file_open_write_end( filename );
-	file_seek_write( 0x15e, SEEK_SET );
-	write16( (u16)header_crc );
-	file_close_write();
+	mm_file_open_write_end( filename );
+	mm_file_seek_write( 0x15e, SEEK_SET );
+	mm_write16( (u16)header_crc );
+	mm_file_close_write();
 	/*
 	// write arm7 rom_offset
-	file_seek_write( 0x30, SEEK_SET );
-	write32( 512 );
+	mm_file_seek_write( 0x30, SEEK_SET );
+	mm_write32( 512 );
 
 	// write arm9 rom_offset
-	file_seek_write( 0x20, SEEK_SET );
-	write32( 512 + 0x4000 );
+	mm_file_seek_write( 0x20, SEEK_SET );
+	mm_write32( 512 + 0x4000 );
 
 	// write arm9 size
-	file_seek_write( 0x2C, SEEK_SET );
-	write32( 0x10000 + output_size );
+	mm_file_seek_write( 0x2C, SEEK_SET );
+	mm_write32( 0x10000 + output_size );
 	*/
 }
 

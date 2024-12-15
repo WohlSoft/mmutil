@@ -73,13 +73,13 @@ int Load_S3M_SampleData( Sample* samp, u8 ffi )
 		{
 			if( samp->format & SAMPF_16BIT )
 			{
-				a = read16();
+				a = mm_read16();
 				a += 32768;
 				((u16*)samp->data)[x] = (u16)a;
 			}
 			else
 			{
-				a = read8();
+				a = mm_read8();
 				a += 128;
 				((u8*)samp->data)[x] = (u8)a;
 			}
@@ -92,12 +92,12 @@ int Load_S3M_SampleData( Sample* samp, u8 ffi )
 		{
 			if( samp->format & SAMPF_16BIT )
 			{
-				a = read16();
+				a = mm_read16();
 				((u16*)samp->data)[x] = (u16)a;
 			}
 			else
 			{
-				a = read8();
+				a = mm_read8();
 				((u8*)samp->data)[x] = (u8)a;
 			}
 		}
@@ -116,31 +116,31 @@ int Load_S3M_Sample( Sample* samp, bool verbose )
 	u32 x;
 	memset( samp, 0, sizeof( Sample ) );
 	samp->msl_index = 0xFFFF;
-	if( read8() == 1 )			// type, 1 = sample
+	if( mm_read8() == 1 )			// type, 1 = sample
 	{
 		for( x = 0; x < 12; x++ )
-			samp->filename[x] = read8();
-		samp->datapointer = (read8()*65536+read16())*16;//read24();
-		samp->sample_length = read32();
-		samp->loop_start = read32();
-		samp->loop_end = read32();
-		samp->default_volume = read8();
+			samp->filename[x] = mm_read8();
+		samp->datapointer = (mm_read8()*65536+mm_read16())*16;//mm_read24();
+		samp->sample_length = mm_read32();
+		samp->loop_start = mm_read32();
+		samp->loop_end = mm_read32();
+		samp->default_volume = mm_read8();
 		samp->global_volume = 64;
-		read8(); // reserved
-		if( read8() != 0 )			// packing, 0 = unpacked
+		mm_read8(); // reserved
+		if( mm_read8() != 0 )			// packing, 0 = unpacked
 			return ERR_UNKNOWNSAMPLE;
-		flags = read8();
+		flags = mm_read8();
 		samp->loop_type = flags&1 ? 1 : 0;
 		if( flags & 2 )
 			return ERR_UNKNOWNSAMPLE;
 		//samp->bit16 = flags&4 ? true : false;
 		samp->format = flags&4 ? SAMP_FORMAT_U16 : SAMP_FORMAT_U8;
-		samp->frequency = read32();
-		read32(); // reserved
-		skip8( 8 ); // internal variables
+		samp->frequency = mm_read32();
+		mm_read32(); // reserved
+		mm_skip8( 8 ); // internal variables
 		for( x =0 ; x < 28; x++ )
-			samp->name[x] = read8();
-		if( read32() != 'SRCS' )
+			samp->name[x] = mm_read8();
+		if( mm_read32() != 'SRCS' )
 			return ERR_UNKNOWNSAMPLE;
 
 		if( verbose )
@@ -180,7 +180,7 @@ int Load_S3M_Pattern( Pattern* patt  )
 	u8 what;
 	int z;
 	
-	clength = read16();
+	clength = mm_read16();
 	// unpack s3m data
 	
 	memset( patt, 0, sizeof( Pattern ) );
@@ -196,7 +196,7 @@ int Load_S3M_Pattern( Pattern* patt  )
 	
 	for( row = 0; row < 64; row++ )
 	{
-		while( (what = read8()) != 0 )	// BYTE:what / 0=end of row
+		while( (what = mm_read8()) != 0 )	// BYTE:what / 0=end of row
 		{
 			col = what & 31;	// &31=channel
 
@@ -204,25 +204,25 @@ int Load_S3M_Pattern( Pattern* patt  )
 
 			if( what & 32 )		// &32=follows;  BYTE:note, BYTE:instrument
 			{
-				patt->data[z].note = read8();
+				patt->data[z].note = mm_read8();
 				if( patt->data[z].note == 255 )
 					patt->data[z].note = 250;
 				else if( patt->data[z].note == 254 )
 					patt->data[z].note = 254;
 				else
 					patt->data[z].note = S3M_NOTE( patt->data[z].note );
-				patt->data[z].inst = read8();
+				patt->data[z].inst = mm_read8();
 			}
 
 			if( what & 64 )		// &64=follows;  BYTE:volume
 			{
-				patt->data[z].vol = read8();
+				patt->data[z].vol = mm_read8();
 			}
 
 			if( what & 128 )	// &128=follows; BYTE:command, BYTE:info
 			{
-				patt->data[z].fx = read8();
-				patt->data[z].param = read8();
+				patt->data[z].fx = mm_read8();
+				patt->data[z].param = mm_read8();
 				if( patt->data[z].fx == 3 )		// convert pattern break to hexadecimal
 				{
 					patt->data[z].param = (patt->data[z].param&0xF) + (patt->data[z].param/16)*10;
@@ -267,13 +267,13 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 
 	memset( mod, 0, sizeof( MAS_Module ) );
 	for( x = 0; x < 28; x++ )
-		mod->title[x] = read8();	// read song name
+		mod->title[x] = mm_read8();	// read song name
 
-	if( read8() != 0x1A )
+	if( mm_read8() != 0x1A )
 	{
 //		return ERR_INVALID_MODULE;
 	}
-	if( read8() != 16 )
+	if( mm_read8() != 16 )
 		return ERR_INVALID_MODULE;
 	if( verbose )
 	{
@@ -282,11 +282,11 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	if( verbose )
 		printf( "Loading S3M, \"%s\"\n", mod->title );
 
-	skip8( 2 ); // reserved space
-	mod->order_count = (u8)read16();
-	mod->inst_count = (u8)read16();
+	mm_skip8( 2 ); // reserved space
+	mod->order_count = (u8)mm_read16();
+	mod->inst_count = (u8)mm_read16();
 	mod->samp_count = mod->inst_count;
-	mod->patt_count = (u8)read16();
+	mod->patt_count = (u8)mm_read16();
 
 	for( x = 0; x < 32; x++ )
 		mod->channel_volume[x] = 64;
@@ -297,30 +297,30 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	mod->restart_pos = 0;	// restart from beginning
 	mod->old_mode=true;
 	
-	s3m_flags = read16();
+	s3m_flags = mm_read16();
 	(void)s3m_flags; // unused for now
-	cwt = read16();
+	cwt = mm_read16();
 	(void)cwt; // unused for now
-	ffi = read16();
-	if( read32() != 'MRCS' ) // "SCRM" mark
+	ffi = mm_read16();
+	if( mm_read32() != 'MRCS' ) // "SCRM" mark
 		return ERR_INVALID_MODULE;
-	mod->global_volume = read8()*2;
-	mod->initial_speed = read8();
-	mod->initial_tempo = read8();
-	stereo = read8() >> 7; // master volume
-	read8(); // ultra click removal
-	dp = read8(); // default pan positions (when 252)
-	skip8( 8+2 ); // reserved space + special pointer
+	mod->global_volume = mm_read8()*2;
+	mod->initial_speed = mm_read8();
+	mod->initial_tempo = mm_read8();
+	stereo = mm_read8() >> 7; // master volume
+	mm_read8(); // ultra click removal
+	dp = mm_read8(); // default pan positions (when 252)
+	mm_skip8( 8+2 ); // reserved space + special pointer
 	for( x = 0; x < 32; x++ )
 	{
-		u8 chn = read8();
+		u8 chn = mm_read8();
 		chan_enabled[x] = chn >> 7;
 		if( stereo )
 		{
 			if( (chn&127) < 8 )	// left channel
-				mod->channel_panning[x] = clamp_u8( 128 - (PANNING_SEP/2) );
+				mod->channel_panning[x] = clamp_u8( 128 - (MM_PANNING_SEP/2) );
 			else // right channel
-				mod->channel_panning[x] = clamp_u8( 128 + (PANNING_SEP/2) );
+				mod->channel_panning[x] = clamp_u8( 128 + (MM_PANNING_SEP/2) );
 		}
 		else
 		{
@@ -330,21 +330,21 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	(void)chan_enabled; // unused for now
 	for( x = 0; x < mod->order_count; x++ )
 	{
-		mod->orders[x] = read8();
+		mod->orders[x] = mm_read8();
 	}
 	parap_inst = (u16*)malloc( mod->inst_count * sizeof( u16 ) );
 	parap_patt = (u16*)malloc( mod->patt_count * sizeof( u16 ) );
 	
 	for( x = 0; x < mod->inst_count; x++ )
-		parap_inst[x] = read16();
+		parap_inst[x] = mm_read16();
 	for( x = 0; x < mod->patt_count; x++ )
-		parap_patt[x] = read16();
+		parap_patt[x] = mm_read16();
 	
 	if( dp == 252 )
 	{
 		for( x = 0; x < 32; x++ )
 		{
-			a = read8();
+			a = mm_read8();
 			if( a & 32 )
 			{
 				mod->channel_panning[x] = (a&15)*16 > 255 ? 255 : (a&15)*16;
@@ -356,11 +356,11 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 					switch( x & 3 ) {
 					case 0:
 					case 3:
-						mod->channel_panning[x] = clamp_u8( 128 - (PANNING_SEP/2) );
+						mod->channel_panning[x] = clamp_u8( 128 - (MM_PANNING_SEP/2) );
 						break;
 					case 1:
 					case 2:
-						mod->channel_panning[x] = clamp_u8( 128 + (PANNING_SEP/2) );
+						mod->channel_panning[x] = clamp_u8( 128 + (MM_PANNING_SEP/2) );
 					}
 				}
 				else
@@ -375,7 +375,7 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 		for( x = 0; x < 32; x++ )
 		{
 			if( stereo )
-				mod->channel_panning[x] = x & 1 ? clamp_u8( 128 - (PANNING_SEP/2) ) : clamp_u8( 128 + (PANNING_SEP/2) );
+				mod->channel_panning[x] = x & 1 ? clamp_u8( 128 - (MM_PANNING_SEP/2) ) : clamp_u8( 128 + (MM_PANNING_SEP/2) );
 			else
 				mod->channel_panning[x] = 128;
 		}
@@ -411,7 +411,7 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 			mod->instruments[x].notemap[y] = y | ((x+1) << 8);
 		
 		// load sample
-		file_seek_read( parap_inst[x]*16, SEEK_SET );
+		mm_file_seek_read( parap_inst[x]*16, SEEK_SET );
 		if( Load_S3M_Sample( &mod->samples[x], verbose ) )
 		{
 			printf( "Error loading sample!\n" );
@@ -433,7 +433,7 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 			printf( vstr_s3m_pattern, x+1, ((x+1)%15)?"":"\n" );
 		}
 			//printf( "%i...", x+1 );
-		file_seek_read( parap_patt[x]*16, SEEK_SET );
+		mm_file_seek_read( parap_patt[x]*16, SEEK_SET );
 		Load_S3M_Pattern( &mod->patterns[x] );
 	}
 	
@@ -445,7 +445,7 @@ int Load_S3M( MAS_Module* mod, bool verbose )
 	}
 	for( x = 0; x < mod->samp_count; x++ )
 	{
-		file_seek_read( mod->samples[x].datapointer, SEEK_SET );
+		mm_file_seek_read( mod->samples[x].datapointer, SEEK_SET );
 		Load_S3M_SampleData( &mod->samples[x], (u8)ffi );
 	}
 	if( verbose )

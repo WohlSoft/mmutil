@@ -32,7 +32,7 @@
 #include "systems.h"
 #include "adpcm.h"
 
-extern int ignore_sflags;
+extern int mm_ignore_sflags;
 
 void Sample_PadStart( Sample* samp, u32 count )
 {
@@ -382,7 +382,7 @@ void FixSample_NDS( Sample* samp )
 	// %o option
 	if( samp->loop_type )
 	{
-		if( !ignore_sflags )
+		if( !mm_ignore_sflags )
 		{
 			if( ((strcmpshit( samp->name, "%o"  )) > 0) )
 			{
@@ -392,7 +392,7 @@ void FixSample_NDS( Sample* samp )
 		}
 	}
 
-	if( !ignore_sflags )
+	if( !mm_ignore_sflags )
 	{
 		if( ((strcmpshit( samp->name, "%c" )) > 0) )
 		{
@@ -523,9 +523,9 @@ void FixSample( Sample* samp )
 	samp->loop_start = MIN(samp->loop_start, samp->sample_length);
 	samp->loop_end = MIN(samp->loop_end, samp->sample_length);
 
-	if( target_system == SYSTEM_GBA )
+	if( mm_target_system == SYSTEM_GBA )
 		FixSample_GBA( samp );
-	else if( target_system == SYSTEM_NDS )
+	else if( mm_target_system == SYSTEM_NDS )
 		FixSample_NDS( samp );
 }
 

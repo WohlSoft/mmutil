@@ -31,7 +31,7 @@ set(LIBMMUTIL_SRC
 	source/simple.h
 	source/solution.h
 	source/systems.h
-	source/upload.c
+	# source/upload.c
 	source/version.h
 	source/wav.c
 	source/wav.h

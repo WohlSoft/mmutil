@@ -33,7 +33,7 @@
 
 int Load_WAV( Sample* samp, bool verbose, bool fix )
 {
-	unsigned int file_size;
+	unsigned int mm_file_size;
 	unsigned int bit_depth = 8;
 	unsigned int hasformat = 0;
 	unsigned int hasdata = 0;
@@ -48,20 +48,20 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 	// initialize data
 	memset( samp, 0, sizeof( Sample ) );
 	
-	file_size = file_tell_size();
+	mm_file_size = mm_file_tell_size();
 	
-	read32();						// "RIFF"
-	read32();						// filesize-8
-	read32();						// "WAVE"
+	mm_read32();						// "RIFF"
+	mm_read32();						// filesize-8
+	mm_read32();						// "WAVE"
 	
 	while( 1 )
 	{
 		// break on end of file
-		if( file_tell_read() >= file_size ) break;
+		if( mm_file_tell_read() >= mm_file_size ) break;
 		
 		// read chunk code and length
-		chunk_code = read32();
-		chunk_size = read32();
+		chunk_code = mm_read32();
+		chunk_size = mm_read32();
 		
 		// parse chunk code
 		switch( chunk_code )
@@ -71,7 +71,7 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 		//---------------------------------------------------------------------
 			
 			// check compression code (1 = PCM)
-			if( read16() != 1 )
+			if( mm_read16() != 1 )
 			{
 				if( verbose )
 					printf( "Unsupported WAV format.\n" );
@@ -79,17 +79,17 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 			}
 			
 			// read # of channels
-			num_channels = read16();
+			num_channels = mm_read16();
 			
 			// read sampling frequency
-			samp->frequency = read32();
+			samp->frequency = mm_read32();
 			
 			// skip average something, wBlockAlign
-			read32();
-			read16();
+			mm_read32();
+			mm_read16();
 			
 			// get bit depth, catch unsupported values
-			bit_depth = read16();
+			bit_depth = mm_read16();
 			if( bit_depth != 8 && bit_depth != 16 )
 			{
 				if( verbose )
@@ -109,7 +109,7 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 			
 			// skip the rest of the chunk (if any)
 			if( (chunk_size - 0x10) > 0 )
-				skip8( (chunk_size - 0x10) );
+				mm_skip8( (chunk_size - 0x10) );
 			
 			hasformat = 1;
 			break;
@@ -128,7 +128,7 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 			
 			// clip chunk size against end of file (for some borked wavs...)
 			{
-				unsigned int br = file_size - file_tell_read();
+				unsigned int br = mm_file_size - mm_file_tell_read();
 				chunk_size = chunk_size > br ? br : chunk_size;
 			}
 			
@@ -143,7 +143,7 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 				// for multi-channel samples, get average value
 				for( unsigned int c = 0; c < num_channels; c++ )
 				{
-					dat += bit_depth == 8 ? ((int)read8()) - 128 : ((short)read16());
+					dat += bit_depth == 8 ? ((int)mm_read8()) - 128 : ((short)mm_read16());
 				}
 				dat /= num_channels;
 				
@@ -165,21 +165,21 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 		case 'lpms':	// sampler chunk
 		//------------------------------------------------------------------------------
 		{
-			smpl_chunk_pos = file_tell_read();
-			skip8( chunk_size );
+			smpl_chunk_pos = mm_file_tell_read();
+			mm_skip8( chunk_size );
 			break;
 		}	
 		default:
-			skip8( chunk_size );
+			mm_skip8( chunk_size );
 		}
 	}
 	
 	// sampler chunk is processed last because it depends on the sample length being known.
 	if ( smpl_chunk_pos )
 	{
-		file_seek_read( smpl_chunk_pos, SEEK_SET );
+		mm_file_seek_read( smpl_chunk_pos, SEEK_SET );
 		
-		skip8( 	4		// manufacturer
+		mm_skip8( 	4		// manufacturer
 				+4		// product
 				+4		// sample period
 				+4		// midi unity note
@@ -188,15 +188,15 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 				+4		// smpte offset
 				);
 		
-		int num_sample_loops = read32();
+		int num_sample_loops = mm_read32();
 		
-		read32();		// sample data
+		mm_read32();		// sample data
 		
 		// check for sample looping data
 		if( num_sample_loops )
 		{
-			read32();	// cue point ID
-			int loop_type = read32();
+			mm_read32();	// cue point ID
+			int loop_type = mm_read32();
 			
 			if( loop_type < 2 )
 			{
@@ -204,8 +204,8 @@ int Load_WAV( Sample* samp, bool verbose, bool fix )
 				// 0=forward | 1
 				// 1=bidi    | 2
 				samp->loop_type = loop_type + 1;
-				samp->loop_start = read32();
-				samp->loop_end = read32();
+				samp->loop_start = mm_read32();
+				samp->loop_end = mm_read32();
 				
 				// clip loop start against sample length
 				if( samp->loop_end > samp->sample_length ) {

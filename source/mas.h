@@ -162,6 +162,6 @@ void Write_Pattern( Pattern* patt, bool xm_vol );
 int Write_MAS( MAS_Module* mod, bool verbose, bool msl_dep );
 void Delete_Module( MAS_Module* mod );
 
-extern u32 MAS_FILESIZE;
+extern u32 MM_MAS_FILESIZE;
 
 #endif

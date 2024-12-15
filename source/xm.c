@@ -103,24 +103,24 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 	
 	memset( inst, 0, sizeof( Instrument ) );
 
-	inst_headstart = file_tell_read();
-	inst_size = read32();
+	inst_headstart = mm_file_tell_read();
+	inst_size = mm_read32();
 	
 	for( x = 0; x < 22; x++ )
-		inst->name[x] = read8(); // instrument name
+		inst->name[x] = mm_read8(); // instrument name
 //	if( verbose )
 //		printf( "  Name=\"%s\"\n", inst->name );
-//	if( read8() != 0 )
+//	if( mm_read8() != 0 )
 //		return ERR_UNKNOWNINST;
-	read8(); // instrument type, SUPPOSED TO ALWAYS BE 0...
-	nsamples = read16();
+	mm_read8(); // instrument type, SUPPOSED TO ALWAYS BE 0...
+	nsamples = mm_read16();
 	if( nsamples > 0 )
 	{
-		samp_headsize = read32();
+		samp_headsize = mm_read32();
 		// read sample map
 		for( x = 0; x < 96; x++ )
 		{
-			inst->notemap[x+12] = ((read8()+ns+1)*256) | (x+12);
+			inst->notemap[x+12] = ((mm_read8()+ns+1)*256) | (x+12);
 		}
 		for( x=0; x < 12; x++ )
 			inst->notemap[x] =( inst->notemap[12]&0xFF00) | x;
@@ -128,25 +128,25 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 			inst->notemap[x] =( inst->notemap[12]&0xFF00) | x;
 		for( x = 0; x < 12; x++ )
 		{
-			inst->envelope_volume.node_x[x] = read16();
-			inst->envelope_volume.node_y[x] = (u8)read16();
+			inst->envelope_volume.node_x[x] = mm_read16();
+			inst->envelope_volume.node_y[x] = (u8)mm_read16();
 		}
 		for( x = 0; x < 12; x++ )
 		{
-			inst->envelope_pan.node_x[x] = read16();
-			inst->envelope_pan.node_y[x] = (u8)read16();
+			inst->envelope_pan.node_x[x] = mm_read16();
+			inst->envelope_pan.node_y[x] = (u8)mm_read16();
 		}
 		inst->global_volume = 128;
-		inst->envelope_volume.node_count = read8();
-		inst->envelope_pan.node_count = read8();
-		inst->envelope_volume.sus_start = inst->envelope_volume.sus_end = read8();
-		inst->envelope_volume.loop_start = read8();
-		inst->envelope_volume.loop_end = read8();
-		inst->envelope_pan.sus_start = inst->envelope_pan.sus_end = read8();
-		inst->envelope_pan.loop_start = read8();
-		inst->envelope_pan.loop_end = read8();
-		volbits = read8();
-		panbits = read8();
+		inst->envelope_volume.node_count = mm_read8();
+		inst->envelope_pan.node_count = mm_read8();
+		inst->envelope_volume.sus_start = inst->envelope_volume.sus_end = mm_read8();
+		inst->envelope_volume.loop_start = mm_read8();
+		inst->envelope_volume.loop_end = mm_read8();
+		inst->envelope_pan.sus_start = inst->envelope_pan.sus_end = mm_read8();
+		inst->envelope_pan.loop_start = mm_read8();
+		inst->envelope_pan.loop_end = mm_read8();
+		volbits = mm_read8();
+		panbits = mm_read8();
 		inst->env_flags = 0;
 		if( volbits & 1 )
 			inst->env_flags |= 1|8;
@@ -163,12 +163,12 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 		if( !(panbits & 4) )
 			inst->envelope_pan.loop_start=inst->envelope_pan.loop_end=255;
 		
-		vibtype=read8();
-		vibsweep=32768/(read8()+1);
-		vibdepth=read8();
-		vibrate=read8();
-		inst->fadeout = read16()/32;			// apply scalar!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		file_seek_read( inst_headstart+inst_size, SEEK_SET );
+		vibtype=mm_read8();
+		vibsweep=32768/(mm_read8()+1);
+		vibdepth=mm_read8();
+		vibrate=mm_read8();
+		inst->fadeout = mm_read16()/32;			// apply scalar!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		mm_file_seek_read( inst_headstart+inst_size, SEEK_SET );
 			
 /*		if( verbose )
 		{
@@ -187,16 +187,16 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 		{
 			if( ns+x >= 256 )
 				return ERR_TOOMANYSAMPLES;
-			samp_headstart = file_tell_read();
+			samp_headstart = mm_file_tell_read();
 			samp = &mas->samples[ns+x];
 //			if( verbose && nsamples != 1 )
 //				printf( "  Loading sample %i...\n", x+1 );
 			memset( samp, 0, sizeof( Sample ) );
 			samp->msl_index = 0xFFFF;
-			samp->sample_length = read32();
-			samp->loop_start = read32();
-			samp->loop_end = read32()+samp->loop_start;
-			samp->default_volume = read8();
+			samp->sample_length = mm_read32();
+			samp->loop_start = mm_read32();
+			samp->loop_end = mm_read32()+samp->loop_start;
+			samp->default_volume = mm_read8();
 			samp->global_volume = 64;
 
 			samp->vibtype = vibtype;
@@ -204,15 +204,15 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 			samp->vibspeed = vibrate;
 			samp->vibrate = vibsweep;
 
-			finetune = (s8)read8();
-			loopbits = read8();
-			samp->default_panning = (read8()>>1) | 128;
-			relnote = (s8)read8();
-			read8();		// reserved
+			finetune = (s8)mm_read8();
+			loopbits = mm_read8();
+			samp->default_panning = (mm_read8()>>1) | 128;
+			relnote = (s8)mm_read8();
+			mm_read8();		// reserved
 
 			for( y =0; y <22; y ++)
 			{
-				samp->name[y] = read8();
+				samp->name[y] = mm_read8();
 				if( y < 12 )
 					samp->filename[y] = samp->name[y];
 			}
@@ -228,7 +228,7 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 				samp->loop_end /= 2;
 			}
 			samp->loop_type = loopbits & 3;
-			file_seek_read( samp_headstart + samp_headsize, SEEK_SET );
+			mm_file_seek_read( samp_headstart + samp_headsize, SEEK_SET );
 /*
 			if( verbose )
 			{
@@ -259,7 +259,7 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 				samp->data = (u16*)malloc( samp->sample_length*2 );
 				for( t = 0; t < samp->sample_length; t++ )
 				{
-					sample_old = (s16)((s16)read16() + sample_old);
+					sample_old = (s16)((s16)mm_read16() + sample_old);
 					((u16*)samp->data)[t] = sample_old + 32768;
 				}
 			}
@@ -268,7 +268,7 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 				samp->data = (u8*)malloc( samp->sample_length );
 				for( t = 0; t < samp->sample_length; t++ )
 				{
-					sample_old = (s8)((s8)read8() + sample_old);
+					sample_old = (s8)((s8)mm_read8() + sample_old);
 					((u8*)samp->data)[t] = sample_old + 128;
 				}
 			}
@@ -284,7 +284,7 @@ int Load_XM_Instrument( Instrument* inst, MAS_Module* mas, u8* p_nextsample, boo
 	}
 	else
 	{
-		file_seek_read( inst_headstart+inst_size, SEEK_SET );
+		mm_file_seek_read( inst_headstart+inst_size, SEEK_SET );
 		if( verbose )
 			printf( vstr_xm_nosamp, inst->name );
 	}
@@ -540,16 +540,16 @@ int Load_XM_Pattern( Pattern* patt, u32 nchannels, bool verbose )
 	u32 e;
 	u8 fx,param;
 
-	headstart = file_tell_read();
-	headsize = read32();
+	headstart = mm_file_tell_read();
+	headsize = mm_read32();
 	
-	if( read8() != 0 )
+	if( mm_read8() != 0 )
 		return ERR_UNKNOWNPATTERN;
 
 	memset( patt, 0, sizeof( Pattern ) );
 	
-	patt->nrows = read16();
-	clength = read16();
+	patt->nrows = mm_read16();
+	clength = mm_read16();
 	
 	if( verbose )
 		printf( "- %i rows, %.2f KB\n", patt->nrows, (float)(clength)/1000 );
@@ -561,7 +561,7 @@ int Load_XM_Pattern( Pattern* patt, u32 nchannels, bool verbose )
 		patt->data[row].vol = 0;
 	}
 
-	file_seek_read( headstart+headsize, SEEK_SET );
+	mm_file_seek_read( headstart+headsize, SEEK_SET );
 	
 	if( clength == 0 )
 	{
@@ -575,12 +575,12 @@ int Load_XM_Pattern( Pattern* patt, u32 nchannels, bool verbose )
 		for( col = 0; col < nchannels; col++ )
 		{
 			e = row*MAX_CHANNELS+col;
-			b = read8();
+			b = mm_read8();
 			if( b & 128 )	// packed
 			{
 				if( b & 1 )			// bit 0 set: Note follows
 				{
-					patt->data[e].note = read8();			// (byte) Note (1-96, 1 = C-0)
+					patt->data[e].note = mm_read8();			// (byte) Note (1-96, 1 = C-0)
 					if( patt->data[e].note == 97 )
 						patt->data[e].note = 255;
 					else
@@ -588,18 +588,18 @@ int Load_XM_Pattern( Pattern* patt, u32 nchannels, bool verbose )
 				}
 				if( b & 2 )			// 1 set: Instrument follows
 				{
-					patt->data[e].inst = read8();			// (byte) Instrument (1-128)
+					patt->data[e].inst = mm_read8();			// (byte) Instrument (1-128)
 				}
 				if( b & 4 )			// 2 set: Volume column byte follows
 				{
-					patt->data[e].vol = read8();	// (byte) Volume column byte
+					patt->data[e].vol = mm_read8();	// (byte) Volume column byte
 				}
 				if( b & 8 )			// 3 set: Effect type follows
-					fx = read8();								// (byte) Effect type
+					fx = mm_read8();								// (byte) Effect type
 				else
 					fx=0;
 				if( b & 16 )		// 4 set: Guess what!
-					param=read8();								// (byte) Effect parameter
+					param=mm_read8();								// (byte) Effect parameter
 				else
 					param=0;
 
@@ -617,10 +617,10 @@ int Load_XM_Pattern( Pattern* patt, u32 nchannels, bool verbose )
 					patt->data[e].note = 255;
 				else
 					patt->data[e].note += 12-1;
-				patt->data[e].inst = read8();			// (byte) Instrument (1-128)
-				patt->data[e].vol = read8();				// (byte) Volume column byte (see below)
-				fx = read8();								// (byte) Effect type
-				param=read8();								// (byte) Effect parameter
+				patt->data[e].inst = mm_read8();			// (byte) Instrument (1-128)
+				patt->data[e].vol = mm_read8();				// (byte) Volume column byte (see below)
+				fx = mm_read8();								// (byte) Effect type
+				param=mm_read8();								// (byte) Effect parameter
 				CONV_XM_EFFECT( &fx, &param );				// convert effect
 				patt->data[e].fx = fx;
 				patt->data[e].param = param;
@@ -645,28 +645,28 @@ int Load_XM( MAS_Module* mod, bool verbose )
 	mod->global_volume=64;
 	mod->old_mode=false;
 
-	if( read32() != 'etxE' || read32() != 'dedn' || read32() != 'doM ' || read32() != ':elu' || read8() != ' ' )
+	if( mm_read32() != 'etxE' || mm_read32() != 'dedn' || mm_read32() != 'doM ' || mm_read32() != ':elu' || mm_read8() != ' ' )
 		return ERR_INVALID_MODULE;
 	for( x = 0; x < 20; x++ )
-		mod->title[x] = read8();
+		mod->title[x] = mm_read8();
 	if( verbose )
 	{
 		printf(  vstr_xm_div  );
 		printf( "Loading XM, \"%s\"\n", mod->title );
 	}
-	if( read8() != 0x1a )
+	if( mm_read8() != 0x1a )
 		return ERR_INVALID_MODULE;
-	skip8( 20 ); // tracker name
-	xm_version = read16();
-	xm_headsize = read32();
-	mod->order_count	= (u8)read16();
-	mod->restart_pos	= (u8)read16();
-	xm_nchannels		= read16();
-	mod->patt_count		= (u8)read16();
-	mod->inst_count		= (u8)read16();
-	mod->freq_mode		= read16() & 1 ? true : false;		// flags
-	mod->initial_speed	= (u8)read16();
-	mod->initial_tempo	= (u8)read16();
+	mm_skip8( 20 ); // tracker name
+	xm_version = mm_read16();
+	xm_headsize = mm_read32();
+	mod->order_count	= (u8)mm_read16();
+	mod->restart_pos	= (u8)mm_read16();
+	xm_nchannels		= mm_read16();
+	mod->patt_count		= (u8)mm_read16();
+	mod->inst_count		= (u8)mm_read16();
+	mod->freq_mode		= mm_read16() & 1 ? true : false;		// flags
+	mod->initial_speed	= (u8)mm_read16();
+	mod->initial_tempo	= (u8)mm_read16();
 
 	if( verbose )
 	{
@@ -694,17 +694,17 @@ int Load_XM( MAS_Module* mod, bool verbose )
 	for( x = 0; x < 200; x++ )		// read order table
 	{
 		if( x < mod->order_count )
-			mod->orders[x] = read8();
+			mod->orders[x] = mm_read8();
 		else
 		{
-			read8();
+			mm_read8();
 			mod->orders[x] = 255;
 		}
 	}
 	
 	for( ; x < 256; x++ )			// skip 200->255
-		read8();
-	file_seek_read( 60+xm_headsize, SEEK_SET );	// or maybe 60..
+		mm_read8();
+	mm_file_seek_read( 60+xm_headsize, SEEK_SET );	// or maybe 60..
 
 	if( verbose )
 	{

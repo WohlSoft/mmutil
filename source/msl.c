@@ -40,30 +40,35 @@
 #include "systems.h"
 #include "samplefix.h"
 
-FILE*	F_SCRIPT=NULL;
+int mm_target_system = SYSTEM_NDS;
 
-FILE*	F_SAMP=NULL;
-FILE*	F_SONG=NULL;
+bool mm_ignore_sflags = false;
+int MM_PANNING_SEP = 128;
 
-FILE*	F_HEADER=NULL;
-FILE*	F_INI=NULL;
+// static FILE*	F_SCRIPT=NULL;
 
-char    INI_STATE='\0';
+static FILE*	F_SAMP=NULL;
+// static FILE*	F_SONG=NULL;
 
-u16		MSL_SAMPS_START;
-u16		MSL_SONGS_START;
+static FILE*	F_HEADER=NULL;
+static FILE*	F_INI=NULL;
 
-u16		MSL_NSAMPS;
-u16		MSL_NSONGS;
+static char    INI_STATE='\0';
 
-char	str_msl[256];
+static u16		MSL_SAMPS_START;
+static u16		MSL_SONGS_START;
+
+static u16		MSL_NSAMPS;
+static u16		MSL_NSONGS;
+
+static char	str_msl[256];
 
 #define TMP_SAMP "sampJ328G54AU3.tmp"
 #define TMP_SONG "songDJ34957FAI.tmp"
 
 void MSL_PrintDefinition( char* filename, u16 id, char* prefix );
 
-#define SAMPLE_HEADER_SIZE (12 + (( target_system == SYSTEM_NDS ) ? 4:0))
+#define SAMPLE_HEADER_SIZE (12 + (( mm_target_system == SYSTEM_NDS ) ? 4:0))
 
 void MSL_Erase( u16 start_sample, u16 start_mod )
 {
@@ -71,27 +76,27 @@ void MSL_Erase( u16 start_sample, u16 start_mod )
 	MSL_SONGS_START = start_mod;
 	MSL_NSAMPS = MSL_SAMPS_START;
 	MSL_NSONGS = MSL_SONGS_START;
-	file_delete( TMP_SAMP );
-	file_delete( TMP_SONG );
+	mm_file_delete( TMP_SAMP );
+	mm_file_delete( TMP_SONG );
 }
 
 u16 MSL_AddSample( Sample* samp )
 {
 	u32 sample_length;
 	// u32 x; // UNUSED
-	file_open_write_end( TMP_SAMP );
+	mm_file_open_write_end( TMP_SAMP );
 
 	sample_length = samp->sample_length;
 
-	write32( ((samp->format & SAMPF_16BIT) ? sample_length*2 : sample_length ) + SAMPLE_HEADER_SIZE  +4); // +4 for sample padding
-	write8 ( (target_system == SYSTEM_GBA) ? MAS_TYPE_SAMPLE_GBA : MAS_TYPE_SAMPLE_NDS );
-	write8( MAS_VERSION );
-	write8( samp->filename[0] == '#' ? 1 : 0);
-	write8( BYTESMASHER );
+	mm_write32( ((samp->format & SAMPF_16BIT) ? sample_length*2 : sample_length ) + SAMPLE_HEADER_SIZE  +4); // +4 for sample padding
+	mm_write8 ( (mm_target_system == SYSTEM_GBA) ? MAS_TYPE_SAMPLE_GBA : MAS_TYPE_SAMPLE_NDS );
+	mm_write8( MAS_VERSION );
+	mm_write8( samp->filename[0] == '#' ? 1 : 0);
+	mm_write8( BYTESMASHER );
 
 	Write_SampleData(samp);
 
-	file_close_write();
+	mm_file_close_write();
 	MSL_NSAMPS++;
 	return MSL_NSAMPS-1;
 }
@@ -108,7 +113,7 @@ u16 MSL_AddSampleC( Sample* samp )
 	int samp_id;
 	bool samp_match;
 		
-	int fsize=file_size( TMP_SAMP );
+	int fsize=mm_file_size( TMP_SAMP );
 	if( fsize == 0 )
 	{
 		return MSL_AddSample( samp );
@@ -118,16 +123,16 @@ u16 MSL_AddSampleC( Sample* samp )
 	samp_id = 0;
 	while( ftell( F_SAMP ) < fsize )
 	{
-		h_filesize = read32f( F_SAMP );
-		read32f( F_SAMP );
-		samp_len = read32f( F_SAMP );
-		samp_llen = read32f( F_SAMP );
-		sformat = read8f( F_SAMP );
-		skip8f( 3, F_SAMP );
-		if( target_system == SYSTEM_NDS )
+		h_filesize = mm_read32f( F_SAMP );
+		mm_read32f( F_SAMP );
+		samp_len = mm_read32f( F_SAMP );
+		samp_llen = mm_read32f( F_SAMP );
+		sformat = mm_read8f( F_SAMP );
+		mm_skip8f( 3, F_SAMP );
+		if( mm_target_system == SYSTEM_NDS )
 		{
 			target_sformat = sample_dsformat( samp );
-			skip8f(4,F_SAMP);
+			mm_skip8f(4,F_SAMP);
 		}
 		else
 		{
@@ -142,7 +147,7 @@ u16 MSL_AddSampleC( Sample* samp )
 			{
 				for( st=0; st<samp_len; st++ )
 				{
-					if( read16f( F_SAMP ) != ((u16*)samp->data)[st] )
+					if( mm_read16f( F_SAMP ) != ((u16*)samp->data)[st] )
 					{
 						samp_match = false;
 						break;
@@ -153,7 +158,7 @@ u16 MSL_AddSampleC( Sample* samp )
 			{
 				for( st=0; st<samp_len; st++ )
 				{
-					if( read8f( F_SAMP ) != ((u8*)samp->data)[st] )
+					if( mm_read8f( F_SAMP ) != ((u8*)samp->data)[st] )
 					{
 						samp_match = false;
 						break;
@@ -167,12 +172,12 @@ u16 MSL_AddSampleC( Sample* samp )
 			}
 			else
 			{
-				skip8f( (h_filesize-SAMPLE_HEADER_SIZE ) - (st+1)  , F_SAMP );		// +4 to skip padding
+				mm_skip8f( (h_filesize-SAMPLE_HEADER_SIZE ) - (st+1)  , F_SAMP );		// +4 to skip padding
 			}
 		}
 		else
 		{
-			skip8f( h_filesize- SAMPLE_HEADER_SIZE , F_SAMP ); // +4 to skip padding
+			mm_skip8f( h_filesize- SAMPLE_HEADER_SIZE , F_SAMP ); // +4 to skip padding
 		}
 		samp_id++;
 	}
@@ -193,9 +198,9 @@ u16 MSL_AddModule( MAS_Module* mod )
 		mod->samples[x].msl_index = samp_id;
 	}
 	
-	file_open_write_end( TMP_SONG );
+	mm_file_open_write_end( TMP_SONG );
 	Write_MAS( mod, false, true );
-	file_close_write();
+	mm_file_close_write();
 	MSL_NSONGS++;
 	return MSL_NSONGS-1;
 }
@@ -204,65 +209,65 @@ int MSL_Export( char* filename )
 {
 	u32 x;
 	u32 y;
-	u32 file_size;
+	u32 mm_file_size;
 
 	u32* parap_samp;
 	u32* parap_song;
 
-	if(file_open_write( filename ) != FILE_OPEN_OKAY)
+	if(mm_file_open_write( filename ) != FILE_OPEN_OKAY)
 		return FILE_OPEN_ERROR;
 
-	write16( MSL_NSAMPS );
-	write16( MSL_NSONGS );
-	write8( '*' );
-	write8( 'm' );
-	write8( 'a' );
-	write8( 'x' );
-	write8( 'm' );
-	write8( 'o' );
-	write8( 'd' );
-	write8( '*' );
+	mm_write16( MSL_NSAMPS );
+	mm_write16( MSL_NSONGS );
+	mm_write8( '*' );
+	mm_write8( 'm' );
+	mm_write8( 'a' );
+	mm_write8( 'x' );
+	mm_write8( 'm' );
+	mm_write8( 'o' );
+	mm_write8( 'd' );
+	mm_write8( '*' );
 	
 	parap_samp = (u32*)malloc( MSL_NSAMPS * sizeof( u32 ) );
 	parap_song = (u32*)malloc( MSL_NSONGS * sizeof( u32 ) );
 	
 	// reserve space for parapointers
 	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
-		write32( 0xAAAAAAAA );
+		mm_write32( 0xAAAAAAAA );
 	for( x = MSL_SONGS_START; x < MSL_NSONGS; x++ )
-		write32( 0xAAAAAAAA );
+		mm_write32( 0xAAAAAAAA );
 	// copy samples
-	file_open_read( TMP_SAMP );
+	mm_file_open_read( TMP_SAMP );
 	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
 	{
-		align32();
-		parap_samp[x] = file_tell_write();
-		file_size = read32();
-		write32( file_size );
-		for( y = 0; y < file_size+4; y++ )
-			write8( read8() );
+		mm_align32();
+		parap_samp[x] = mm_file_tell_write();
+		mm_file_size = mm_read32();
+		mm_write32( mm_file_size );
+		for( y = 0; y < mm_file_size+4; y++ )
+			mm_write8( mm_read8() );
 	}
-	file_close_read();
+	mm_file_close_read();
 	
-	file_open_read( TMP_SONG );
+	mm_file_open_read( TMP_SONG );
 	for( x = MSL_SONGS_START; x < MSL_NSONGS; x++ )
 	{
-		align32();
-		parap_song[x] = file_tell_write();
-		file_size = read32();
-		write32( file_size );
-		for( y = 0; y < file_size+4; y++ )
-			write8( read8() );
+		mm_align32();
+		parap_song[x] = mm_file_tell_write();
+		mm_file_size = mm_read32();
+		mm_write32( mm_file_size );
+		for( y = 0; y < mm_file_size+4; y++ )
+			mm_write8( mm_read8() );
 	}
-	file_close_read();
+	mm_file_close_read();
 	
-	file_seek_write( 0x0C, SEEK_SET );
+	mm_file_seek_write( 0x0C, SEEK_SET );
 	for( x = MSL_SAMPS_START; x < MSL_NSAMPS; x++ )
-		write32( parap_samp[x] );
+		mm_write32( parap_samp[x] );
 	for( x=  MSL_SONGS_START; x < MSL_NSONGS; x++ )
-		write32( parap_song[x] );
+		mm_write32( parap_song[x] );
 
-	file_close_write();
+	mm_file_close_write();
 
 	if( parap_samp )
 		free( parap_samp );
@@ -332,7 +337,7 @@ void MSL_LoadFile( char* filename, bool verbose )
 	Sample wav;
 	MAS_Module mod;
 	int f_ext;
-	if( file_open_read( filename ) )
+	if( mm_file_open_read( filename ) )
 	{
 		printf( "Cannot open %s for reading! Skipping.\n", filename );
 		return;
@@ -370,7 +375,7 @@ void MSL_LoadFile( char* filename, bool verbose )
 		// print error/warning
 		printf( "Unknown file %s...\n", filename );
 	}
-	file_close_read();
+	mm_file_close_read();
 	
 }
 
@@ -413,10 +418,10 @@ int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini
 //	if( !F_HEADER )
 //		return -1;	// needs header file!
 	
-	file_open_write( TMP_SAMP );
-	file_close_write();
-	file_open_write( TMP_SONG );
-	file_close_write();
+	mm_file_open_write( TMP_SAMP );
+	mm_file_close_write();
+	mm_file_open_write( TMP_SONG );
+	mm_file_close_write();
 	
 	for( x = 1; x < argc; x++ )
 	{
@@ -432,8 +437,8 @@ int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini
 
 	if(MSL_Export( output ) != ERR_NONE)
 	{
-		file_delete( TMP_SAMP );
-		file_delete( TMP_SONG );
+		mm_file_delete( TMP_SAMP );
+		mm_file_delete( TMP_SONG );
 		printf( "Error: could not open output file [%s] for writing\n", output );
 		return FILE_OPEN_ERROR;
 	}
@@ -464,7 +469,7 @@ int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini
 		F_INI=NULL;
 	}
 
-	file_delete( TMP_SAMP );
-	file_delete( TMP_SONG );
+	mm_file_delete( TMP_SAMP );
+	mm_file_delete( TMP_SONG );
 	return ERR_NONE;
 }

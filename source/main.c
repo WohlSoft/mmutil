@@ -46,12 +46,8 @@
 
 extern void kiwi_start(void);
 
-int target_system;
-
-bool ignore_sflags;
-int PANNING_SEP;
-
-int number_of_inputs;
+extern bool mm_ignore_sflags;
+static int number_of_inputs;
 
 #define USAGE "\n\
 *************************\n\
@@ -165,11 +161,11 @@ int main(int argc, char* argv[])
 
 	int output_size;
 
-	ignore_sflags=false;
+	mm_ignore_sflags=false;
 
+	MM_PANNING_SEP = 128;
 	number_of_inputs=0;
 
-	PANNING_SEP = 128;
 	int start_sample = 0;
 	int start_mod = 0;
 
@@ -186,11 +182,11 @@ int main(int argc, char* argv[])
 			else if( argv[a][1] == 'v' )
 				v_flag = true;
 			else if( argv[a][1] == 'd' )
-				target_system = SYSTEM_NDS;
+				mm_target_system = SYSTEM_NDS;
 			else if( argv[a][1] == 'i' )
-				ignore_sflags = true;
+				mm_ignore_sflags = true;
 			else if( argv[a][1] == 'p' )
-				PANNING_SEP = ((argv[a][2] - '0') * 256)/9;
+				MM_PANNING_SEP = ((argv[a][2] - '0') * 256)/9;
 			else if( argv[a][1] == 'o' )
 				str_output = argv[a]+2;
 			else if( argv[a][1] == 'h' )
@@ -226,7 +222,7 @@ int main(int argc, char* argv[])
 	if( z_flag )
 	{
 		kiwi_start();
-		file_open_read( str_input );
+		mm_file_open_read( str_input );
 		Sample s;
 		
 		Load_WAV( &s, false,false );
@@ -237,13 +233,13 @@ int main(int argc, char* argv[])
 		
 		FixSample( &s );
 		
-		file_close_read();
-		file_open_write( str_output );
+		mm_file_close_read();
+		mm_file_open_write( str_output );
 		
 		for( unsigned int i = 0; i < s.sample_length; i++ )
-			write8( ((u8*)s.data)[i] );
+			mm_write8( ((u8*)s.data)[i] );
 		
-		file_close_write();
+		mm_file_close_write();
 		printf("okay\n");
 		return 0;
 	}
@@ -297,14 +293,14 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					if( target_system == SYSTEM_GBA )
+					if( mm_target_system == SYSTEM_GBA )
 					{
 						str_output[strpi++] = 'g';
 						str_output[strpi++] = 'b';
 						str_output[strpi++] = 'a';
 						str_output[strpi++] = 0;
 					}
-					else if( target_system == SYSTEM_NDS )
+					else if( mm_target_system == SYSTEM_NDS )
 					{
 						str_output[strpi++] = 'n';
 						str_output[strpi++] = 'd';
@@ -336,7 +332,7 @@ int main(int argc, char* argv[])
 
 	if( m_flag )
 	{
-		if( file_open_read( str_input ) )
+		if( mm_file_open_read( str_input ) )
 		{
 			printf( "Cannot open %s for reading!\n", str_input );
 			return -1;
@@ -351,7 +347,7 @@ int main(int argc, char* argv[])
 			if( Load_MOD( &mod, v_flag ) )
 			{
 				print_error( ERR_INVALID_MODULE );
-				file_close_read();
+				mm_file_close_read();
 				return -1;
 			}
 			break;
@@ -361,7 +357,7 @@ int main(int argc, char* argv[])
 			if( Load_S3M( &mod, v_flag ) )
 			{
 				print_error( ERR_INVALID_MODULE );
-				file_close_read();
+				mm_file_close_read();
 				return -1;
 			}
 			break;
@@ -371,7 +367,7 @@ int main(int argc, char* argv[])
 			if( Load_XM( &mod, v_flag ) )
 			{
 				print_error( ERR_INVALID_MODULE );
-				file_close_read();
+				mm_file_close_read();
 				return -1;
 			}
 			break;
@@ -382,15 +378,15 @@ int main(int argc, char* argv[])
 			{
 				// ERROR!
 				print_error( ERR_INVALID_MODULE );
-				file_close_read();
+				mm_file_close_read();
 				return -1;
 			}
 			break;
 		}
 		
-		file_close_read();
+		mm_file_close_read();
 
-		if( file_exists( str_output ) )
+		if( mm_file_exists( str_output ) )
 		{
 			printf( "Output file exists! Overwrite? (y/n) " );
 			if( !GetYesNo() )
@@ -400,7 +396,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		if( file_open_write( str_output ) )
+		if( mm_file_open_write( str_output ) )
 		{
 			print_error( ERR_NOWRITE );
 			return -1;
@@ -412,7 +408,7 @@ int main(int argc, char* argv[])
 		output_size = Write_MAS( &mod, v_flag, false );
 
 		
-		file_close_write();
+		mm_file_close_write();
 
 		Delete_Module( &mod );
 
@@ -431,7 +427,7 @@ int main(int argc, char* argv[])
 
 		MMUTIL_Create( argv, argc, "tempSH308GK.bin", NULL, NULL, v_flag, 0, 0 );
 
-		if( file_exists( str_output ) )
+		if( mm_file_exists( str_output ) )
 		{
 			printf( "Output file exists! Overwrite? (y/n) " );
 			if( !GetYesNo() )
@@ -442,51 +438,51 @@ int main(int argc, char* argv[])
 			
 		}
 
-		if( file_open_write( str_output ) )
+		if( mm_file_open_write( str_output ) )
 		{
 			print_error( ERR_NOWRITE );
 			return -1;
 		}
 
-		if( target_system == SYSTEM_GBA )
+		if( mm_target_system == SYSTEM_GBA )
 		{
 			if( v_flag )
 				printf( "Making GBA ROM.......\n" );
 			Write_GBA();
 		}
-		else if( target_system == SYSTEM_NDS )
+		else if( mm_target_system == SYSTEM_NDS )
 		{
 			if( v_flag )
 				printf( "Making NDS ROM.......\n" );
 			Write_NDS();
 		}
 
-		output_size = file_size( "tempSH308GK.bin" );
-		file_open_read( "tempSH308GK.bin" );
+		output_size = mm_file_size( "tempSH308GK.bin" );
+		mm_file_open_read( "tempSH308GK.bin" );
 
-		if( target_system == SYSTEM_GBA )
+		if( mm_target_system == SYSTEM_GBA )
 		{
-			write32( (output_size < 248832) ? 1 : 0 );
+			mm_write32( (output_size < 248832) ? 1 : 0 );
 		}
 
 		for( i = 0; i < output_size; i++ )
 		{
-			write8( read8() );
+			mm_write8( mm_read8() );
 		}
 
-		file_close_read();
-		file_close_write();
+		mm_file_close_read();
+		mm_file_close_write();
 		
-		file_delete( "tempSH308GK.bin" );
+		mm_file_delete( "tempSH308GK.bin" );
 
-		if( b_flag && target_system == SYSTEM_NDS )
+		if( b_flag && mm_target_system == SYSTEM_NDS )
 			Validate_NDS( str_output, output_size );
 		
 		if( v_flag )
 		{
 			printf( "Success! :D\n" );
 
-			if( b_flag && target_system == SYSTEM_GBA )
+			if( b_flag && mm_target_system == SYSTEM_GBA )
 			{
 				if( output_size < 262144 )
 				{
@@ -500,7 +496,7 @@ int main(int argc, char* argv[])
 		if( !str_output )
 			str_output = "soundbank.bin";
 
-		if( file_exists( str_output ) )
+		if( mm_file_exists( str_output ) )
 		{
 			printf( "Output file exists! Overwrite? (y/n) " );
 			if( !GetYesNo() )

@@ -27,7 +27,7 @@
 
 #define BYTESMASHER		0xBA
 #define MAX_CHANNELS		32
-extern int PANNING_SEP;
+extern int MM_PANNING_SEP;
 
 //#define SUPER_ASCII
 

@@ -200,7 +200,7 @@ u16 MSL_AddModule( MAS_Module* mod )
 	return MSL_NSONGS-1;
 }
 
-void MSL_Export( char* filename )
+int MSL_Export( char* filename )
 {
 	u32 x;
 	u32 y;
@@ -209,7 +209,9 @@ void MSL_Export( char* filename )
 	u32* parap_samp;
 	u32* parap_song;
 
-	file_open_write( filename );
+	if(file_open_write( filename ) != FILE_OPEN_OKAY)
+		return FILE_OPEN_ERROR;
+
 	write16( MSL_NSAMPS );
 	write16( MSL_NSONGS );
 	write8( '*' );
@@ -266,6 +268,8 @@ void MSL_Export( char* filename )
 		free( parap_samp );
 	if( parap_song )
 		free( parap_song );
+
+	return ERR_NONE;
 }
 
 void MSL_PrintDefinition( char* filename, u16 id, char* prefix )
@@ -426,7 +430,13 @@ int MSL_Create( char* argv[], int argc, char* output, char* header, char* ini, b
 		}
 	}
 
-	MSL_Export( output );
+	if(MSL_Export( output ) != ERR_NONE)
+	{
+		file_delete( TMP_SAMP );
+		file_delete( TMP_SONG );
+		printf( "Error: could not open output file [%s] for writing\n", output );
+		return FILE_OPEN_ERROR;
+	}
 
 	if( F_HEADER )
 	{

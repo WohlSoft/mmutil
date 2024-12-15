@@ -20,9 +20,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.           *
  ****************************************************************************/
 
-#ifndef MSL_H
-#define MSL_H
+#ifndef MMUTIL_H
+#define MMUTIL_H
 
-int MSL_Create( char* argv[], int argc, char* output, char* header, char* ini, bool verbose, int start_sample, int start_mod );
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini, bool verbose, int start_sample, int start_mod );
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

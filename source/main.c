@@ -39,7 +39,7 @@
 #include "files.h"
 #include "errors.h"
 #include "simple.h"
-#include "msl.h"
+#include "mmutil.h"
 #include "systems.h"
 #include "wav.h"
 #include "samplefix.h"
@@ -429,7 +429,7 @@ int main(int argc, char* argv[])
 	{
 		int i;
 
-		MSL_Create( argv, argc, "tempSH308GK.bin", NULL, NULL, v_flag, 0, 0 );
+		MMUTIL_Create( argv, argc, "tempSH308GK.bin", NULL, NULL, v_flag, 0, 0 );
 
 		if( file_exists( str_output ) )
 		{
@@ -510,7 +510,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		MSL_Create( argv, argc, str_output, str_header, str_ini, v_flag, start_sample, start_mod );
+		MMUTIL_Create( argv, argc, str_output, str_header, str_ini, v_flag, start_sample, start_mod );
 	}
 	return 0;
 }

@@ -374,7 +374,7 @@ void MSL_LoadFile( char* filename, bool verbose )
 	
 }
 
-int MSL_Create( char* argv[], int argc, char* output, char* header, char* ini, bool verbose, int start_sample, int start_mod )
+int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini, bool verbose, int start_sample, int start_mod )
 {
 //	int str_w=0;
 //	u8 pmode=0;

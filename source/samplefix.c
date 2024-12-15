@@ -223,7 +223,7 @@ void Resample( Sample* samp, u32 newsize )
 									(samp->loop_type ? 
 										((double)(src16[lpoint + (posi + 1 - oldlength)])) : 0) : 
 										((double)(src16[posi+1]));
-			s3 = (posi+1) >= oldlength ? 
+			s3 = (posi+2) >= oldlength ?
 									(samp->loop_type ? 
 										((double)(src16[lpoint + (posi + 2 - oldlength)])) : 0) : 
 										((double)(src16[posi+2]));
@@ -236,7 +236,7 @@ void Resample( Sample* samp, u32 newsize )
 									(samp->loop_type ? 
 										((double)(src8[lpoint + (posi + 1 - oldlength)])) : 0) : 
 										((double)(src8[posi+1]));
-			s3 = (posi+1) >= oldlength ? 
+			s3 = (posi+2) >= oldlength ?
 									(samp->loop_type ? 
 										((double)(src8[lpoint + (posi + 2 - oldlength)])) : 0) : 
 										((double)(src8[posi+2]));

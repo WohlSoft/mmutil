@@ -423,7 +423,7 @@ int MMUTIL_Create( char* argv[], int argc, char* output, char* header, char* ini
 	mm_file_open_write( TMP_SONG );
 	mm_file_close_write();
 	
-	for( x = 1; x < argc; x++ )
+	for( x = 0; x < argc; x++ )
 	{
 		if( argv[x][0] == '-' )
 		{

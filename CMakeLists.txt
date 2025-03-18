@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.2...3.5)
 
 project(mmutil VERSION 1.10.2 LANGUAGES C)
 
+include(GNUInstallDirs)
+
 set(LIBMMUTIL_SRC
 	source/adpcm.c
 	source/adpcm.h
@@ -44,6 +46,7 @@ set(LIBMMUTIL_SRC
 )
 
 add_library(libmmutil "${LIBMMUTIL_SRC}")
+set_target_properties(libmmutil PROPERTIES OUTPUT_NAME mmutil PUBLIC_HEADER "public/mmutil.h")
 target_include_directories(libmmutil PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/public")
 target_link_libraries(libmmutil PUBLIC m)
 set_target_properties(libmmutil PROPERTIES OUTPUT_NAME "mmutil")
@@ -56,3 +59,10 @@ if(NOT MSVC)
 	target_compile_options(libmmutil PRIVATE -Wall -Wextra -Wno-multichar)
 	target_compile_options(mmutil PRIVATE -Wall -Wextra -Wno-multichar)
 endif()
+
+install(TARGETS libmmutil mmutil
+	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+	LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+	ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+	PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
